@@ -5,36 +5,43 @@ const subjects = [
     code: "26EN101T",
     name: "Communicative English",
     color: "bg-[#ffe2d5]",
+    href: "/ece/year-1/sem-1/communicative-english",
   },
   {
     code: "26MA101T",
     name: "Linear Algebra & Calculus",
     color: "bg-[#e4defd]",
+    href: "/ece/year-1/sem-1/linear-algebra-and-calculus",
   },
   {
     code: "26CH101T",
     name: "Engineering Chemistry",
     color: "bg-[#dff1e8]",
+    href: "/ece/year-1/sem-1/engineering-chemistry",
   },
   {
     code: "26CS101T",
     name: "Programming for Problem Solving",
     color: "bg-[#fff0bd]",
+    href: "/ece/year-1/sem-1/programming-for-problem-solving",
   },
   {
     code: "26EE101T",
     name: "Basics of Engineering",
     color: "bg-[#dcebf8]",
+    href:  "/ece/year-1/sem-1/basics-of-engineering",
   },
   {
     code: "LABS",
     name: "Labs",
     color: "bg-[#f3dfef]",
+    href: "#",
   },
   {
     code: "26HS101V",
     name: "Sports / Yoga / NCC / NSS",
     color: "bg-[#e9e5d8]",
+    href: "#",
   },
 ];
 
@@ -142,11 +149,7 @@ export default function SemesterOnePage() {
 
             <Link
               key={subject.code}
-              href={
-                subject.code === "26MA101T"
-                  ? "/ece/year-1/sem-1/linear-algebra-and-calculus"
-                  : "#"
-              }
+              href={subject.href}
               className={`group relative min-h-[180px] rounded-[1.5rem] ${subject.color} border border-black/5 p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-md`}
             >
 
