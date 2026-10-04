@@ -173,7 +173,7 @@ export default function AdminPage() {
     if (error) {
       console.error("Error loading lab materials:", error);
     } else {
-      setMaterials((data || []) as LabMaterial[]);
+      setMaterials((data || []) as unknown as LabMaterial[]);
     }
 
     setMaterialsLoading(false);
