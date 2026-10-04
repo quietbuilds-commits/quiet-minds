@@ -29,19 +29,19 @@ const subjects = [
     code: "26EE101T",
     name: "Basics of Engineering",
     color: "bg-[#dcebf8]",
-    href:  "/ece/year-1/sem-1/basics-of-engineering",
+    href: "/ece/year-1/sem-1/basics-of-engineering",
   },
   {
     code: "LABS",
     name: "Labs",
     color: "bg-[#f3dfef]",
-    href: "#",
+    href: "/labs",
   },
   {
     code: "26HS101V",
     name: "Sports / Yoga / NCC / NSS",
     color: "bg-[#e9e5d8]",
-    href: "#",
+    href: "/sports",
   },
 ];
 
@@ -269,3 +269,5 @@ export default function SemesterOnePage() {
     </main>
   );
 }
+
+
