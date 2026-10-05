@@ -1,10 +1,27 @@
 import Link from "next/link";
 
+function SearchIcon() {
+  return (
+    <svg
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    >
+      <circle cx="10.5" cy="10.5" r="6" />
+      <path d="M15 15L20 20" />
+    </svg>
+  );
+}
+
 function GraduationCap() {
   return (
     <svg
-      width="24"
-      height="24"
+      width="26"
+      height="26"
       viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -24,448 +41,299 @@ function GraduationCap() {
   );
 }
 
-function SearchIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-    >
-      <circle cx="10.5" cy="10.5" r="6" />
-      <path d="M15 15L20 20" />
-    </svg>
-  );
-}
-
-function BuildingIllustration() {
-  return (
-    <svg
-      viewBox="0 0 520 230"
-      className="w-full"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* clouds */}
-      <path
-        d="M60 70C60 58 69 48 81 48C85 48 90 49 94 52C98 42 108 35 119 35C134 35 146 46 146 61"
-        stroke="#5D98E7"
-        strokeWidth="2"
-      />
-
-      <path
-        d="M400 45C400 34 409 25 420 25C424 25 428 26 432 29C436 19 445 13 456 13C470 13 481 24 481 38"
-        stroke="#5D98E7"
-        strokeWidth="2"
-      />
-
-      {/* left building */}
-      <path
-        d="M50 178V113L178 80V178"
-        stroke="#4388DD"
-        strokeWidth="2"
-      />
-
-      {/* main building */}
-      <path
-        d="M178 178V64L306 31V178"
-        stroke="#4388DD"
-        strokeWidth="2"
-      />
-
-      {/* right building */}
-      <path
-        d="M306 178V79L440 59V178"
-        stroke="#4388DD"
-        strokeWidth="2"
-      />
-
-      {/* main entrance */}
-      <path
-        d="M215 178V111H273V178"
-        stroke="#4388DD"
-        strokeWidth="2"
-      />
-
-      <path
-        d="M225 178V119H263V178"
-        stroke="#4388DD"
-        strokeWidth="1.5"
-      />
-
-      {/* windows */}
-      {[
-        [78, 126],
-        [105, 119],
-        [132, 112],
-        [195, 82],
-        [223, 75],
-        [251, 68],
-        [331, 91],
-        [359, 87],
-        [387, 83],
-        [331, 116],
-        [359, 112],
-        [387, 108],
-      ].map(([x, y], i) => (
-        <rect
-          key={i}
-          x={x}
-          y={y}
-          width="14"
-          height="17"
-          stroke="#4388DD"
-          strokeWidth="1.5"
-        />
-      ))}
-
-      {/* trees */}
-      <circle cx="34" cy="166" r="22" fill="#B5DEC9" />
-      <circle cx="55" cy="151" r="28" fill="#B5DEC9" />
-      <circle cx="79" cy="166" r="22" fill="#B5DEC9" />
-      <path d="M56 168V193" stroke="#70A98B" strokeWidth="2" />
-
-      <circle cx="438" cy="164" r="22" fill="#B5DEC9" />
-      <circle cx="462" cy="148" r="29" fill="#B5DEC9" />
-      <circle cx="488" cy="165" r="22" fill="#B5DEC9" />
-      <path d="M463 168V193" stroke="#70A98B" strokeWidth="2" />
-
-      {/* ground */}
-      <path
-        d="M25 195C140 188 280 191 490 195"
-        stroke="#4388DD"
-        strokeWidth="2"
-      />
-
-      <path
-        d="M205 184H286"
-        stroke="#4388DD"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
 const subjects = [
-  "Communicative English",
-  "Linear Algebra & Calculus",
-  "Engineering Chemistry",
-  "Programming for Problem Solving",
-  "Basics of Engineering",
-  "Labs",
-  "Sports / Yoga / NCC / NSS",
+  {
+    number: "01",
+    name: "Maths",
+    description: "Linear Algebra and Calculus",
+    href: "/ece/year-1/sem-1/linear-algebra-and-calculus",
+    background: "#E8F1FF",
+    circle: "#CFE0FF",
+  },
+  {
+    number: "02",
+    name: "Engg Chem",
+    description: "Engineering Chemistry",
+    href: "/ece/year-1/sem-1/engineering-chemistry",
+    background: "#FFE9E3",
+    circle: "#FFD0C3",
+  },
+  {
+    number: "03",
+    name: "Basics",
+    description: "Basics of Engineering",
+    href: "/ece/year-1/sem-1/basics-of-engineering",
+    background: "#E8F5E9",
+    circle: "#CDE8D0",
+  },
+  {
+    number: "04",
+    name: "C Programming",
+    description: "Programming for Problem Solving",
+    href: "/ece/year-1/sem-1/programming-for-problem-solving",
+    background: "#F0E8FF",
+    circle: "#DED0FA",
+  },
+  {
+    number: "05",
+    name: "English",
+    description: "Communicative English",
+    href: "/ece/year-1/sem-1/communicative-english",
+    background: "#FFF4D9",
+    circle: "#F8E5A9",
+  },
+  {
+    number: "06",
+    name: "Lab",
+    description: "Laboratory Work",
+    href: "/labs",
+    background: "#E3F5F1",
+    circle: "#C7E8E0",
+  },
+  {
+    number: "07",
+    name: "Sports, NCC",
+    description: "Activities",
+    href: "/sports",
+    background: "#FFE7EF",
+    circle: "#F6CCD9",
+  },
 ];
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white text-[#17366b]">
+    <main className="min-h-screen overflow-hidden bg-[#E8F8F6] text-[#263B5C]">
 
-      {/* ================= HEADER ================= */}
-
-      <header className="border-b border-[#dce5f2] bg-white">
-        <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between px-6">
-
-          <Link href="/" className="text-[18px] font-bold tracking-[-0.5px]">
+      {/* HEADER */}
+      <header className="border-b border-[#E8DED4] bg-[#FFFDF9]">
+        <div className="mx-auto flex h-[64px] max-w-[1180px] items-center justify-between px-6">
+          <Link
+            href="/"
+            className="text-[19px] font-bold tracking-[-0.7px] text-[#263F70]"
+          >
             QUIET MINDS
           </Link>
 
-          <nav className="hidden items-center gap-8 text-[11px] font-medium md:flex">
-            <Link href="/" className="text-[#3159c9]">
+          <nav className="hidden items-center gap-9 text-[14px] font-medium md:flex">
+            <Link href="/" className="text-[#3159C9]">
               Home
             </Link>
 
             <Link
               href="/ece"
-              className="transition hover:text-[#3159c9]"
+              className="text-[#42516B] transition hover:text-[#3159C9]"
             >
               Browse
             </Link>
 
             <Link
               href="/ece/year-1/sem-1"
-              className="transition hover:text-[#3159c9]"
+              className="text-[#42516B] transition hover:text-[#3159C9]"
             >
               Syllabus
             </Link>
 
             <Link
-              href="#about"
-              className="transition hover:text-[#3159c9]"
+              href="/news"
+              className="text-[#42516B] transition hover:text-[#3159C9]"
             >
-              About
+              News
             </Link>
           </nav>
 
-          <div className="hidden items-center gap-2 rounded-lg border border-[#dce5f2] px-3 py-2 text-[#7790b2] md:flex">
+          <Link
+            href="/ece"
+            aria-label="Search"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#DCD5CD] bg-white text-[#647A9A] transition hover:border-[#AFC0D9] hover:text-[#3159C9]"
+          >
             <SearchIcon />
-            <span className="text-[10px]">
-              Search notes, subjects...
-            </span>
-          </div>
-
+          </Link>
         </div>
       </header>
 
+      {/* HERO */}
+      <section className="bg-[#EAF3FF] px-5 py-7 sm:px-7 sm:py-9">
+        <div className="mx-auto grid max-w-[900px] grid-cols-[1.05fr_0.75fr] items-start gap-4">
 
-      {/* ================= HERO ================= */}
+          {/* TEXT BOX */}
+          <div className="relative max-w-[480px] justify-self-start overflow-hidden rounded-[18px] border border-[#D2E2F8] bg-[#F7FBFF] px-4 py-3 shadow-[0_8px_24px_rgba(66,103,150,0.06)] sm:px-5 sm:py-4">
+            <div className="absolute -bottom-12 -left-10 h-24 w-24 rounded-full bg-[#FFE2D3]" />
 
-      <section className="bg-[#eaf4ff]">
+            <div className="relative">
+              <span className="inline-flex rounded-full bg-[#E5F0FF] px-3 py-1.5 text-[11px] font-semibold text-[#4773B8]">
+                Where ideas begin.
+              </span>
 
-        <div className="mx-auto grid max-w-[1200px] items-center px-7 py-10 md:grid-cols-2 md:py-12">
+              <h1 className="mt-3 text-[30px] font-extrabold leading-[1.02] tracking-[-1.3px] text-[#173D7A] sm:text-[40px]">
+                Your notes.
+                <br />
+                Your subjects.
+                <br />
+                At one place.
+              </h1>
 
-          {/* LEFT */}
+              <div className="mt-4 h-[3px] w-[46px] rounded-full bg-[#5E87CC]" />
 
-          <div>
+              <p className="mt-4 max-w-[460px] text-[14px] leading-5.5 text-[#5D7698]">
+                A simple study space for students.
+                <br />
+                Find notes, question papers and study materials in one place.
+              </p>
 
-            <p className="mb-2 text-[10px] font-medium tracking-wide text-[#356bd0]">
-              Where ideas begin.
-            </p>
-
-            <h1 className="max-w-[440px] text-[39px] font-extrabold leading-[0.98] tracking-[-1.8px] text-[#173d7a] md:text-[46px]">
-              Your notes.
-              <br />
-              Your subjects.
-              <br />
-              At one place.
-            </h1>
-
-            <div className="mt-5 h-[2px] w-[45px] bg-[#548de2]" />
-
-            <p className="mt-4 max-w-[390px] text-[9px] leading-4 text-[#55769f]">
-              A simple study space for ECE students.
-              <br />
-              Find notes, question papers and study materials in one place.
-            </p>
-
-            <Link
-              href="/ece"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#3159c9] px-4 py-2.5 text-[8px] font-semibold text-white shadow-md transition hover:-translate-y-0.5"
-            >
-              Explore ECE
-              <span>→</span>
-            </Link>
-
+              <Link
+                href="/ece"
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#3159C9] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_7px_18px_rgba(49,89,201,0.2)] transition hover:-translate-y-0.5"
+              >
+                Explore ECE
+                <span className="text-[16px]">→</span>
+              </Link>
+            </div>
           </div>
 
-
-          {/* RIGHT */}
-
-          <div className="relative mt-8 md:mt-0">
-
-            <div className="absolute right-5 top-0 text-right text-[8px] italic leading-3 text-[#5789c9]">
-              Learn quietly,
-              <br />
-              grow steadily.
-            </div>
-
-            <div className="pt-8">
-              <BuildingIllustration />
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* ================= IDENTITY ================= */}
-
-      <section className="bg-white px-6 py-6 text-center">
-
-        <p className="text-[9px] italic text-[#5679a8]">
-          A little beyond classroom.
-        </p>
-
-        <p className="mt-3 text-[7px] uppercase tracking-[2px] text-[#8aa0bd]">
-          YOUR STUDY SPACE
-        </p>
-
-        <h2 className="mt-2 text-[14px] font-semibold text-[#173d7a]">
-          Start from here
-        </h2>
-
-      </section>
-
-
-      {/* ================= ECE ONLY ================= */}
-
-      <section className="bg-white px-6 pb-6">
-
-        <div className="mx-auto flex max-w-[1200px] justify-center">
-
+          {/* ECE BOX */}
           <Link
             href="/ece"
-            className="group w-[170px] rounded-lg border border-[#cddcff] bg-[#edf3ff] px-5 py-5 text-center transition duration-200 hover:-translate-y-1 hover:shadow-md"
+            className="group relative flex min-h-[250px] flex-col items-center justify-center overflow-hidden rounded-[24px] border border-[#E4D7B7] bg-[#FFF2D8] p-5 text-center shadow-[0_10px_30px_rgba(130,100,55,0.07)] transition hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(130,100,55,0.12)] sm:min-h-[280px]"
           >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#F9D7C8]" />
+            <div className="absolute -bottom-10 -left-8 h-28 w-28 rounded-full bg-[#D9EFD9]" />
 
-            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-[#dbe7ff] text-[#3159c9]">
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#E5D6FF] text-[#6753A4]">
               <GraduationCap />
             </div>
 
-            <h3 className="mt-3 text-[12px] font-bold text-[#173d7a]">
+            <h2 className="relative mt-5 text-[25px] font-bold text-[#5B4A3B]">
               ECE
-            </h3>
+            </h2>
 
-            <p className="mt-1 text-[6px] text-[#7188a9]">
-              Academic archive
+            <p className="relative mt-1 text-[12px] text-[#887565]">
+              Choose year
             </p>
 
-            <div className="mt-3 text-[7px] font-medium text-[#3159c9]">
+            <div className="relative mt-5 rounded-full bg-white/80 px-4 py-2 text-[12px] font-semibold text-[#80603F]">
               Explore →
             </div>
-
           </Link>
-
         </div>
-
       </section>
 
+      {/* EXAM SECTION */}
+      <section className="bg-[#FFF0E5] px-6 py-7">
+        <div className="mx-auto max-w-[1000px]">
+          <div className="rounded-[20px] border border-[#F0CFB8] bg-[#FFF9F5] px-6 py-5">
+            <p className="text-[12px] font-bold tracking-[2px] text-[#B5673D]">
+              EXAM SECTION
+            </p>
 
-      {/* ================= SUBJECTS ================= */}
+            <p className="mt-2 text-[13px] text-[#987661]">
+              Your exam resources will appear here.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <section className="border-y border-[#dce5f2] bg-[#f7faff] px-6 py-7">
-
+      {/* SUBJECTS */}
+      <section className="bg-[#E8F8F6] px-6 py-9">
         <div className="mx-auto max-w-[1000px]">
 
-          <p className="text-[6px] uppercase tracking-[1.5px] text-[#557fd0]">
-            ECE · YEAR 1 · SEM 1
-          </p>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[2px] text-[#7862A9]">
+                ECE · YEAR 1 · SEM 1
+              </p>
 
-          <h2 className="mt-1 text-[17px] font-semibold text-[#173d7a]">
-            Subjects
-          </h2>
+              <h2 className="mt-2 text-[30px] font-bold tracking-[-0.8px] text-[#3E4770]">
+                Subjects
+              </h2>
+            </div>
 
-
-          <div className="mt-4 grid gap-2 md:grid-cols-2">
-
-            {subjects.map((subject, index) => (
-
-              <Link
-                key={subject}
-                href="/ece/year-1/sem-1"
-                className="flex items-center justify-between rounded-md border border-[#d5e0f0] bg-white px-3 py-2.5 transition hover:border-[#9bb8eb] hover:bg-[#fbfdff]"
-              >
-
-                <div className="flex items-center gap-3">
-
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#eef4ff] text-[6px] font-medium text-[#5278c8]">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-
-                  <span className="text-[8px] text-[#294d80]">
-                    {subject}
-                  </span>
-
-                </div>
-
-                <span className="text-[9px] text-[#6c91cf]">
-                  →
-                </span>
-
-              </Link>
-
-            ))}
-
+            <div className="hidden rounded-full bg-[#E3D9FF] px-3 py-1.5 text-[11px] font-medium text-[#7663A4] sm:block">
+              7 subjects
+            </div>
           </div>
 
-        </div>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {subjects.map((subject) => (
+              <Link
+                key={subject.number}
+                href={subject.href}
+                style={{ backgroundColor: subject.background }}
+                className="group flex min-h-[92px] items-center justify-between rounded-[20px] border border-white/80 px-5 py-4 shadow-[0_5px_16px_rgba(80,70,110,0.05)] transition hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(80,70,110,0.1)]"
+              >
+                <div className="flex min-w-0 items-center gap-4">
+                  <span
+                    style={{ backgroundColor: subject.circle }}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-[#596D8E]"
+                  >
+                    {subject.number}
+                  </span>
 
+                  <div className="min-w-0">
+                    <p className="truncate text-[20px] font-semibold tracking-[-0.4px] text-[#334D72]">
+                      {subject.name}
+                    </p>
+
+                    <p className="mt-1 truncate text-[12px] text-[#71839D]">
+                      {subject.description}
+                    </p>
+                  </div>
+                </div>
+
+                <span className="ml-3 shrink-0 text-[18px] text-[#6885AF] transition group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
       </section>
 
+      {/* BOTTOM LINKS */}
+      <section className="bg-[#FFF9F3] px-6 py-7">
+        <div className="mx-auto flex max-w-[900px] flex-wrap justify-center gap-x-12 gap-y-3">
+          <Link
+            href="/ece"
+            className="text-[13px] font-medium text-[#6C7890] transition hover:text-[#3159C9]"
+          >
+            Notes
+          </Link>
 
-      {/* ================= FEATURES ================= */}
+          <Link
+            href="/ece"
+            className="text-[13px] font-medium text-[#6C7890] transition hover:text-[#3159C9]"
+          >
+            Papers
+          </Link>
 
-      <section className="bg-white px-6 py-7">
+          <Link
+            href="/ece/year-1/sem-1"
+            className="text-[13px] font-medium text-[#6C7890] transition hover:text-[#3159C9]"
+          >
+            Syllabus
+          </Link>
 
-        <div className="mx-auto grid max-w-[1000px] grid-cols-2 md:grid-cols-5">
-
-          <Feature
-            icon="▤"
-            title="Notes"
-            text="Understand study notes and summaries."
-          />
-
-          <Feature
-            icon="▣"
-            title="Question Papers"
-            text="Previous papers and exam questions."
-          />
-
-          <Feature
-            icon="▢"
-            title="Syllabus"
-            text="Subject-wise syllabus and course details."
-          />
-
-          <Feature
-            icon="⌕"
-            title="Search"
-            text="Find what you need quickly."
-          />
-
-          <Feature
-            icon="♧"
-            title="Subjects"
-            text="All Semester 1 subjects in one place."
-          />
-
+          <Link
+            href="/ece"
+            className="text-[13px] font-medium text-[#6C7890] transition hover:text-[#3159C9]"
+          >
+            Search
+          </Link>
         </div>
-
       </section>
 
-
-      {/* ================= FOOTER ================= */}
-
+      {/* FOOTER */}
       <footer
         id="about"
-        className="bg-[#f5f8fc] px-6 py-5 text-center"
+        className="border-t border-[#E8DED4] bg-[#F4EDE5] px-6 py-6 text-center"
       >
-
-        <p className="text-[7px] font-medium tracking-[2px] text-[#6683aa]">
+        <p className="text-[11px] font-bold tracking-[2.5px] text-[#806D5D]">
           QUIET MINDS
         </p>
 
-        <p className="mt-2 text-[6px] text-[#8295b2]">
+        <p className="mt-2 text-[11px] text-[#9A897A]">
           A quieter way to study.
         </p>
-
       </footer>
-
     </main>
-  );
-}
-
-
-/* ================= FEATURE COMPONENT ================= */
-
-function Feature({
-  icon,
-  title,
-  text,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="border-[#dbe4ef] px-5 py-3 text-center md:border-r last:border-r-0">
-
-      <div className="text-[15px] text-[#4276d7]">
-        {icon}
-      </div>
-
-      <h3 className="mt-2 text-[7px] font-semibold text-[#244a80]">
-        {title}
-      </h3>
-
-      <p className="mx-auto mt-1 max-w-[120px] text-[5px] leading-3 text-[#8193ad]">
-        {text}
-      </p>
-
-    </div>
   );
 }
