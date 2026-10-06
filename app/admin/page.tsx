@@ -61,6 +61,16 @@ function formatDate(date: string): string {
 }
 
 export default function AdminPage() {
+  // Authentication
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [adminVerified, setAdminVerified] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
+
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [materials, setMaterials] = useState<LabMaterial[]>([]);
 
@@ -134,15 +144,172 @@ export default function AdminPage() {
 
     return materials.filter(
       (material) =>
-        material.subject_id ===
-        managerLabFilter
+        material.subject_id === managerLabFilter
     );
   }, [materials, managerLabFilter]);
 
   useEffect(() => {
-    loadSubjects();
-    loadLabMaterials();
+    checkExistingSession();
+
+    const {
+      data: authListener,
+    } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (session?.user) {
+          setAuthenticated(true);
+          setUserEmail(session.user.email || "");
+
+          await verifyAdmin(session.user.id);
+        } else {
+          setAuthenticated(false);
+          setAdminVerified(false);
+          setUserEmail("");
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
+
+  async function checkExistingSession() {
+    setAuthLoading(true);
+    setError("");
+
+    const {
+      data: sessionData,
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      setError(sessionError.message);
+      setAuthLoading(false);
+      return;
+    }
+
+    if (!sessionData.session?.user) {
+      setAuthenticated(false);
+      setAdminVerified(false);
+      setAuthLoading(false);
+      return;
+    }
+
+    setAuthenticated(true);
+    setUserEmail(
+      sessionData.session.user.email || ""
+    );
+
+    await verifyAdmin(
+      sessionData.session.user.id
+    );
+
+    setAuthLoading(false);
+  }
+
+  async function verifyAdmin(userId: string) {
+    setError("");
+
+    const {
+      data: adminData,
+      error: adminError,
+    } = await supabase.rpc("is_admin");
+
+    if (adminError) {
+      console.error(
+        "Admin check failed:",
+        adminError
+      );
+
+      setAdminVerified(false);
+      setError(
+        `Admin check failed: ${adminError.message}`
+      );
+      return;
+    }
+
+    if (adminData !== true) {
+      setAdminVerified(false);
+      setError(
+        "Your account is signed in, but it is not registered as an admin."
+      );
+      return;
+    }
+
+    setAdminVerified(true);
+
+    await loadSubjects();
+    await loadLabMaterials();
+  }
+
+  async function handleLogin() {
+    setError("");
+    setMessage("");
+
+    if (!loginEmail.trim()) {
+      setError("Please enter your email.");
+      return;
+    }
+
+    if (!loginPassword) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    setLoggingIn(true);
+
+    try {
+      const {
+        data,
+        error: loginError,
+      } = await supabase.auth.signInWithPassword({
+        email: loginEmail.trim(),
+        password: loginPassword,
+      });
+
+      if (loginError) {
+        throw new Error(
+          loginError.message
+        );
+      }
+
+      if (!data.user) {
+        throw new Error(
+          "Login succeeded, but no user was returned."
+        );
+      }
+
+      setAuthenticated(true);
+      setUserEmail(data.user.email || "");
+
+      await verifyAdmin(data.user.id);
+
+      setLoginPassword("");
+    } catch (loginError) {
+      setAuthenticated(false);
+      setAdminVerified(false);
+
+      setError(
+        loginError instanceof Error
+          ? loginError.message
+          : "Login failed."
+      );
+    } finally {
+      setLoggingIn(false);
+    }
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+
+    setAuthenticated(false);
+    setAdminVerified(false);
+    setUserEmail("");
+    setSubjects([]);
+    setMaterials([]);
+    setMessage("");
+    setError("");
+  }
 
   async function loadSubjects() {
     setLoading(true);
@@ -240,46 +407,33 @@ export default function AdminPage() {
       error: sessionError,
     } = await supabase.auth.getSession();
 
-    console.log(
-      "SESSION:",
-      sessionData.session?.user?.id,
-      sessionError
-    );
-
-    const {
-      data: userData,
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    console.log(
-      "AUTH USER:",
-      userData.user?.id,
-      userData.user?.email,
-      userError
-    );
-
-    const {
-      data: adminData,
-      error: adminError,
-    } = await supabase.rpc("is_admin");
-
-    console.log(
-      "IS ADMIN:",
-      adminData,
-      adminError
-    );
-
     if (sessionError) {
       throw new Error(
         `Session error: ${sessionError.message}`
       );
     }
 
+    if (!sessionData.session?.user) {
+      throw new Error(
+        "Authentication session is missing. Please sign in again."
+      );
+    }
+
+    const {
+      data: userData,
+      error: userError,
+    } = await supabase.auth.getUser();
+
     if (userError) {
       throw new Error(
         `Authentication error: ${userError.message}`
       );
     }
+
+    const {
+      data: adminData,
+      error: adminError,
+    } = await supabase.rpc("is_admin");
 
     if (adminError) {
       throw new Error(
@@ -922,6 +1076,102 @@ export default function AdminPage() {
     }
   }
 
+  if (authLoading) {
+    return (
+      <main className="min-h-screen bg-[#faf8f5] px-6 py-12">
+        <div className="mx-auto max-w-md text-center text-slate-500">
+          Checking admin session...
+        </div>
+      </main>
+    );
+  }
+
+  if (!authenticated || !adminVerified) {
+    return (
+      <main className="min-h-screen bg-[#faf8f5] px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-md">
+          <div className="mb-8">
+            <p className="mb-2 text-sm font-medium tracking-wide text-slate-500">
+              ADMIN
+            </p>
+
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
+              Admin Sign In
+            </h1>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Sign in with an authorized admin account.
+            </p>
+          </div>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+            <div className="space-y-5">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Email
+                </span>
+
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(event) =>
+                    setLoginEmail(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Admin email"
+                  autoComplete="email"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-base outline-none focus:border-slate-400"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Password
+                </span>
+
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(event) =>
+                    setLoginPassword(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Password"
+                  autoComplete="current-password"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      handleLogin();
+                    }
+                  }}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-base outline-none focus:border-slate-400"
+                />
+              </label>
+
+              {error && (
+                <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleLogin}
+                disabled={loggingIn}
+                className="w-full rounded-xl bg-slate-800 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loggingIn
+                  ? "Signing in..."
+                  : "Sign In"}
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#faf8f5] px-6 py-12">
@@ -935,18 +1185,34 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-[#faf8f5] px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-8">
-          <p className="mb-2 text-sm font-medium tracking-wide text-slate-500">
-            ADMIN
-          </p>
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 text-sm font-medium tracking-wide text-slate-500">
+              ADMIN
+            </p>
 
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
-            Materials Manager
-          </h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-800">
+              Materials Manager
+            </h1>
 
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Upload, replace and manage study and laboratory PDFs.
-          </p>
+            <p className="mt-2 max-w-2xl text-sm text-slate-500">
+              Upload, replace and manage study and laboratory PDFs.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">
+              {userEmail}
+            </span>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
