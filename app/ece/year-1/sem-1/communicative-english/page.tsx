@@ -1,43 +1,67 @@
+
 import Link from "next/link";
+
+const basePath = "/ece/year-1/sem-1/communicative-english";
 
 const studyMaterials = [
   {
     title: "Unit PDFs",
     description: "Unit-wise study material",
-    href: "/ece/year-1/sem-1/communicative-english/unit-pdfs",
+    href: `${basePath}/unit-pdfs`,
     color: "bg-[#eaf4ff]",
   },
   {
     title: "Class Notes",
     description: "Notes from classroom learning",
-    href: "#",
+    href: `${basePath}/materials/class-notes`,
     color: "bg-[#f0ecff]",
   },
   {
     title: "Short Notes / Mind Maps",
     description: "Quick revision material",
-    href: "#",
+    href: `${basePath}/materials/short-notes`,
     color: "bg-[#eaf8f1]",
   },
   {
     title: "Class Questions + Unit-End Questions",
     description: "Questions for practice and revision",
-    href: "#",
+    href: `${basePath}/materials/class-questions`,
     color: "bg-[#fff1e7]",
   },
 ];
 
 const questionBank = [
   {
-    title: "PYQ",
+    title: "PYQs",
     description: "Previous year question papers",
-    href: "#",
+    href: `${basePath}/question-bank/pyq`,
     color: "bg-[#fff4d8]",
   },
   {
     title: "Current Exam Questions",
-    description: "PCA, CA and ESA questions",
-    href: "#",
+    description: "Browse PCA, CA and ESA questions",
+    href: `${basePath}/question-bank`,
+    color: "bg-[#fcecf4]",
+  },
+];
+
+const examTypes = [
+  {
+    title: "PCA",
+    description: "Practice or class assessment papers",
+    href: `${basePath}/question-bank/pca`,
+    color: "bg-[#eaf4ff]",
+  },
+  {
+    title: "CA",
+    description: "Continuous assessment papers",
+    href: `${basePath}/question-bank/ca`,
+    color: "bg-[#eaf8f1]",
+  },
+  {
+    title: "ESA",
+    description: "End semester assessment papers",
+    href: `${basePath}/question-bank/esa`,
     color: "bg-[#fcecf4]",
   },
 ];
@@ -45,17 +69,13 @@ const questionBank = [
 export default function CommunicativeEnglishPage() {
   return (
     <main className="min-h-screen bg-[#faf9f6] text-[#202020] overflow-hidden">
-
       {/* Soft background shapes */}
       <div className="fixed top-24 right-[-100px] w-64 h-64 bg-[#dcd7ff] rounded-full blur-3xl opacity-40 pointer-events-none" />
-
       <div className="fixed bottom-10 left-[-120px] w-72 h-72 bg-[#d8f3e7] rounded-full blur-3xl opacity-40 pointer-events-none" />
-
       <div className="fixed top-[50%] right-[10%] w-36 h-36 bg-[#ffe2c9] rounded-full blur-3xl opacity-30 pointer-events-none" />
 
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-6 md:px-12 py-6 border-b border-black/5">
-
         <Link
           href="/"
           className="font-black tracking-[-0.04em] text-lg"
@@ -63,48 +83,33 @@ export default function CommunicativeEnglishPage() {
           QUIET MINDS
         </Link>
 
-        <nav className="flex items-center gap-3 text-xs md:text-sm text-black/50">
-
+        <nav className="flex flex-wrap items-center gap-3 text-xs md:text-sm text-black/50">
           <Link href="/" className="hover:text-black transition">
             Home
           </Link>
-
           <span className="text-black/20">/</span>
-
           <Link href="/ece" className="hover:text-black transition">
             ECE
           </Link>
-
           <span className="text-black/20">/</span>
-
           <Link href="/ece/year-1" className="hover:text-black transition">
             Year 1
           </Link>
-
           <span className="text-black/20">/</span>
-
           <Link
             href="/ece/year-1/sem-1"
             className="hover:text-black transition"
           >
             Sem 1
           </Link>
-
           <span className="text-black/20">/</span>
-
-          <span className="text-black">
-            Communicative English
-          </span>
-
+          <span className="text-black">Communicative English</span>
         </nav>
-
       </header>
 
       {/* Hero */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 pt-16 md:pt-20 pb-16">
-
         <div className="max-w-2xl">
-
           <p className="text-xs font-semibold tracking-[0.15em] uppercase text-[#7770c9] mb-4">
             26EN101T
           </p>
@@ -120,16 +125,12 @@ export default function CommunicativeEnglishPage() {
           <p className="mt-3 text-sm md:text-base text-black/50 max-w-lg leading-6">
             Explore study material, notes and question resources.
           </p>
-
         </div>
-
       </section>
 
       {/* Study Material */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 pb-20">
-
         <div className="mb-7">
-
           <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-black/35 mb-2">
             Study Material
           </p>
@@ -137,25 +138,19 @@ export default function CommunicativeEnglishPage() {
           <h2 className="text-xl md:text-2xl font-bold tracking-[-0.03em]">
             Learn & revise
           </h2>
-
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
           {studyMaterials.map((item) => (
-
             <Link
               key={item.title}
               href={item.href}
               className="group"
             >
-
               <div
                 className={`min-h-[145px] rounded-[1.5rem] ${item.color} border border-black/5 p-6 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md`}
               >
-
                 <div className="flex justify-between items-start gap-3">
-
                   <h3 className="text-base font-semibold tracking-[-0.02em]">
                     {item.title}
                   </h3>
@@ -163,28 +158,20 @@ export default function CommunicativeEnglishPage() {
                   <span className="text-lg font-light group-hover:translate-x-1 transition-transform">
                     →
                   </span>
-
                 </div>
 
                 <p className="text-xs text-black/45 mt-3 leading-5">
                   {item.description}
                 </p>
-
               </div>
-
             </Link>
-
           ))}
-
         </div>
-
       </section>
 
       {/* Question Bank */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 pb-24">
-
+      <section className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 pb-16">
         <div className="mb-7">
-
           <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-black/35 mb-2">
             Question Bank
           </p>
@@ -192,25 +179,19 @@ export default function CommunicativeEnglishPage() {
           <h2 className="text-xl md:text-2xl font-bold tracking-[-0.03em]">
             Practice & prepare
           </h2>
-
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4 max-w-2xl">
-
           {questionBank.map((item) => (
-
             <Link
               key={item.title}
               href={item.href}
               className="group"
             >
-
               <div
                 className={`min-h-[145px] rounded-[1.5rem] ${item.color} border border-black/5 p-6 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md`}
               >
-
                 <div className="flex justify-between items-start gap-3">
-
                   <h3 className="text-base font-semibold tracking-[-0.02em]">
                     {item.title}
                   </h3>
@@ -218,32 +199,62 @@ export default function CommunicativeEnglishPage() {
                   <span className="text-lg font-light group-hover:translate-x-1 transition-transform">
                     →
                   </span>
-
                 </div>
 
                 <p className="text-xs text-black/45 mt-3 leading-5">
                   {item.description}
                 </p>
-
               </div>
-
             </Link>
-
           ))}
-
         </div>
+      </section>
 
+      {/* Current Exam Questions */}
+      <section className="relative z-10 bg-[#f3f0ff]">
+        <div className="max-w-6xl mx-auto px-6 md:px-12 py-14">
+          <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-[#8877c5] mb-2">
+            Question Bank
+          </p>
+
+          <h2 className="text-xl md:text-2xl font-bold tracking-[-0.03em] mb-7">
+            Current Exam Questions
+          </h2>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            {examTypes.map((exam) => (
+              <Link
+                key={exam.title}
+                href={exam.href}
+                className="group"
+              >
+                <div
+                  className={`min-h-[120px] rounded-2xl ${exam.color} border border-black/5 p-6 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-semibold text-base">
+                      {exam.title}
+                    </h3>
+                    <span className="text-lg group-hover:translate-x-1 transition-transform">
+                      →
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-black/45 mt-3 leading-5">
+                    {exam.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-black/5 max-w-6xl mx-auto px-6 md:px-12 py-8 flex flex-col md:flex-row justify-between gap-3 text-xs text-black/40">
-
         <p>QUIET MINDS</p>
-
         <p>Study quietly. Build steadily.</p>
-
       </footer>
-
     </main>
   );
 }

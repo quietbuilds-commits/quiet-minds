@@ -1,46 +1,76 @@
+
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 
 export default function MathsPage() {
+  const basePath =
+    "/ece/year-1/sem-1/linear-algebra-and-calculus";
+
   const studyMaterial = [
     {
       number: "01",
       title: "Unit PDFs",
       description: "Complete unit-wise study material",
       color: "#EAF4FF",
+      href: `${basePath}/unit-pdfs`,
     },
     {
       number: "02",
       title: "Class Notes",
       description: "Notes collected from classes",
       color: "#F0ECFF",
+      href: `${basePath}/materials/class-notes`,
     },
     {
       number: "03",
       title: "Short Notes",
       description: "Quick revision & mind maps",
       color: "#EAF8F1",
+      href: `${basePath}/materials/short-notes`,
     },
     {
       number: "04",
       title: "Class Questions",
       description: "Class & unit-end questions",
       color: "#FFF1E7",
+      href: `${basePath}/materials/class-questions`,
     },
   ];
 
   const questionBank = [
     {
       number: "01",
-      title: "PYQ",
-      description: "Previous year questions",
+      title: "PYQs",
+      description: "Previous year question papers",
       color: "#FFF4D8",
+      href: `${basePath}/question-bank/pyq`,
     },
     {
       number: "02",
       title: "Current Exam Questions",
-      description: "Questions from recent exams",
+      description: "PCA, CA and ESA assessment papers",
       color: "#FCECF4",
+      href: `${basePath}/question-bank`,
+    },
+  ];
+
+  const examTypes = [
+    {
+      name: "PCA",
+      description: "Practice or class assessment papers",
+      color: "#EAF4FF",
+      href: `${basePath}/question-bank/pca`,
+    },
+    {
+      name: "CA",
+      description: "Continuous assessment papers",
+      color: "#EAF8F1",
+      href: `${basePath}/question-bank/ca`,
+    },
+    {
+      name: "ESA",
+      description: "End semester assessment papers",
+      color: "#FCECF4",
+      href: `${basePath}/question-bank/esa`,
     },
   ];
 
@@ -61,6 +91,8 @@ export default function MathsPage() {
           justifyContent: "space-between",
           alignItems: "center",
           borderBottom: "1px solid #EAE7E0",
+          gap: "16px",
+          flexWrap: "wrap",
         }}
       >
         <div
@@ -73,12 +105,7 @@ export default function MathsPage() {
           QUIET MINDS
         </div>
 
-        <div
-          style={{
-            fontSize: "13px",
-            color: "#777",
-          }}
-        >
+        <div style={{ fontSize: "13px", color: "#777" }}>
           Sem 1 / Maths
         </div>
       </header>
@@ -114,7 +141,9 @@ export default function MathsPage() {
         >
           Linear Algebra
           <br />
-          <span style={{ color: "#7D6BC4" }}>&amp; Calculus.</span>
+          <span style={{ color: "#7D6BC4" }}>
+            &amp; Calculus.
+          </span>
         </h1>
 
         <p
@@ -126,7 +155,8 @@ export default function MathsPage() {
             color: "#666",
           }}
         >
-          Everything you need for the subject, gathered in one quiet space.
+          Everything you need for the subject, gathered in one
+          quiet space.
         </p>
       </section>
 
@@ -151,13 +181,7 @@ export default function MathsPage() {
             01
           </p>
 
-          <h2
-            style={{
-              fontSize: "25px",
-              margin: 0,
-              fontWeight: 600,
-            }}
-          >
+          <h2 style={{ fontSize: "25px", margin: 0, fontWeight: 600 }}>
             Study Material
           </h2>
         </div>
@@ -169,8 +193,12 @@ export default function MathsPage() {
             gap: "16px",
           }}
         >
-          {studyMaterial.map((item) => {
-            const card = (
+          {studyMaterial.map((item) => (
+            <Link
+              key={item.number}
+              href={item.href}
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
               <div
                 style={{
                   background: item.color,
@@ -180,16 +208,11 @@ export default function MathsPage() {
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  cursor:
-                    item.title === "Unit PDFs" ? "pointer" : "default",
+                  cursor: "pointer",
+                  transition: "transform 0.2s ease",
                 }}
               >
-                <span
-                  style={{
-                    fontSize: "12px",
-                    color: "#777",
-                  }}
-                >
+                <span style={{ fontSize: "12px", color: "#777" }}>
                   {item.number}
                 </span>
 
@@ -216,32 +239,15 @@ export default function MathsPage() {
                   </p>
                 </div>
               </div>
-            );
-
-            if (item.title === "Unit PDFs") {
-              return (
-                <Link
-                  key={item.number}
-                  href="/ece/year-1/sem-1/linear-algebra-and-calculus/unit-pdfs"
-                  style={{
-                    textDecoration: "none",
-                    color: "inherit",
-                  }}
-                >
-                  {card}
-                </Link>
-              );
-            }
-
-            return <div key={item.number}>{card}</div>;
-          })}
+            </Link>
+          ))}
         </div>
       </section>
 
       {/* QUESTION BANK */}
       <section
         style={{
-          padding: "20px 6% 75px",
+          padding: "20px 6% 55px",
           maxWidth: "1100px",
           margin: "0 auto",
         }}
@@ -259,13 +265,7 @@ export default function MathsPage() {
             02
           </p>
 
-          <h2
-            style={{
-              fontSize: "25px",
-              margin: 0,
-              fontWeight: 600,
-            }}
-          >
+          <h2 style={{ fontSize: "25px", margin: 0, fontWeight: 600 }}>
             Question Bank
           </h2>
         </div>
@@ -278,67 +278,63 @@ export default function MathsPage() {
           }}
         >
           {questionBank.map((item) => (
-            <div
+            <Link
               key={item.number}
-              style={{
-                background: item.color,
-                borderRadius: "20px",
-                padding: "25px",
-                minHeight: "150px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
+              href={item.href}
+              style={{ textDecoration: "none", color: "inherit" }}
             >
-              <span
+              <div
                 style={{
-                  fontSize: "12px",
-                  color: "#777",
+                  background: item.color,
+                  borderRadius: "20px",
+                  padding: "25px",
+                  minHeight: "150px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  cursor: "pointer",
                 }}
               >
-                {item.number}
-              </span>
+                <span style={{ fontSize: "12px", color: "#777" }}>
+                  {item.number}
+                </span>
 
-              <div>
-                <h3
-                  style={{
-                    margin: "0 0 7px",
-                    fontSize: "17px",
-                    fontWeight: 600,
-                  }}
-                >
-                  {item.title}
-                </h3>
+                <div>
+                  <h3
+                    style={{
+                      margin: "0 0 7px",
+                      fontSize: "17px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.title}
+                  </h3>
 
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "13px",
-                    lineHeight: 1.5,
-                    color: "#777",
-                  }}
-                >
-                  {item.description}
-                </p>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "13px",
+                      lineHeight: 1.5,
+                      color: "#777",
+                    }}
+                  >
+                    {item.description}
+                  </p>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* EXAM TYPES */}
+      {/* CURRENT EXAM QUESTIONS */}
       <section
         style={{
           padding: "55px 6%",
           background: "#F3F0FF",
         }}
       >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-          }}
-        >
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <p
             style={{
               fontSize: "12px",
@@ -363,24 +359,50 @@ export default function MathsPage() {
 
           <div
             style={{
-              display: "flex",
-              flexWrap: "wrap",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
               gap: "12px",
             }}
           >
-            {["PCA", "CA", "ESA"].map((exam) => (
-              <div
-                key={exam}
-                style={{
-                  background: "#FFFFFF",
-                  borderRadius: "14px",
-                  padding: "13px 22px",
-                  fontSize: "14px",
-                  border: "1px solid #E6E1F7",
-                }}
+            {examTypes.map((exam) => (
+              <Link
+                key={exam.name}
+                href={exam.href}
+                style={{ textDecoration: "none", color: "inherit" }}
               >
-                {exam}
-              </div>
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: "14px",
+                    padding: "20px",
+                    border: "1px solid #E6E1F7",
+                    cursor: "pointer",
+                    minHeight: "105px",
+                    transition: "transform 0.2s ease",
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: "0 0 8px",
+                      fontSize: "17px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {exam.name}
+                  </h3>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "12px",
+                      lineHeight: 1.5,
+                      color: "#777",
+                    }}
+                  >
+                    {exam.description}
+                  </p>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

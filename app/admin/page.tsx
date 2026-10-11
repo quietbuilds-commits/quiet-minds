@@ -12,6 +12,23 @@ type Subject = {
   subject_type: string;
 };
 
+type StudyMaterial = {
+  id: string;
+  subject_id: string;
+  title: string;
+  section: string;
+  material_type: string;
+  unit_number: number | null;
+  exam_year: number | null;
+  file_name: string | null;
+  file_path: string;
+  file_type: string | null;
+  file_size: number | null;
+  created_at: string;
+  updated_at: string;
+  subject?: { name: string; code: string } | null;
+};
+
 type LabMaterial = {
   id: string;
   subject_id: string;
@@ -73,6 +90,12 @@ export default function AdminPage() {
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [materials, setMaterials] = useState<LabMaterial[]>([]);
+  const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([]);
+  const [studyMaterialsLoading, setStudyMaterialsLoading] = useState(false);
+  const [managerStudyFilter, setManagerStudyFilter] = useState("all");
+  const [managerStudyCategory, setManagerStudyCategory] = useState("all");
+  const [deletingStudyId, setDeletingStudyId] = useState<string | null>(null);
+  const [replacingStudyId, setReplacingStudyId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [materialsLoading, setMaterialsLoading] = useState(false);
@@ -136,6 +159,11 @@ export default function AdminPage() {
         subject.subject_type === "lab"
     );
   }, [subjects]);
+
+  const filteredStudyMaterials = useMemo(() => studyMaterials.filter((item) =>
+    (managerStudyFilter === "all" || item.subject_id === managerStudyFilter) &&
+    (managerStudyCategory === "all" || item.material_type === managerStudyCategory)
+  ), [studyMaterials, managerStudyFilter, managerStudyCategory]);
 
   const filteredMaterials = useMemo(() => {
     if (managerLabFilter === "all") {
@@ -240,6 +268,7 @@ export default function AdminPage() {
 
     await loadSubjects();
     await loadLabMaterials();
+    await loadStudyMaterials();
   }
 
   async function handleLogin() {
@@ -307,6 +336,7 @@ export default function AdminPage() {
     setUserEmail("");
     setSubjects([]);
     setMaterials([]);
+    setStudyMaterials([]);
     setMessage("");
     setError("");
   }
@@ -394,6 +424,95 @@ export default function AdminPage() {
     }
 
     setMaterialsLoading(false);
+  }
+
+  async function loadStudyMaterials() {
+    setStudyMaterialsLoading(true);
+    const { data, error: studyError } = await supabase
+      .from("materials")
+      .select("id, subject_id, title, section, material_type, unit_number, exam_year, file_name, file_path, file_type, file_size, created_at, updated_at, subject:subjects!materials_subject_id_fkey(name, code)")
+      .order("created_at", { ascending: false });
+    if (studyError) {
+      console.error("Error loading study materials:", studyError);
+      setError(`Could not load study materials: ${studyError.message}`);
+    } else {
+      setStudyMaterials((data || []) as unknown as StudyMaterial[]);
+    }
+    setStudyMaterialsLoading(false);
+  }
+
+  function formatStudyCategory(type: string) {
+    const labels: Record<string, string> = {
+      unit_pdf: "Unit PDF", class_note: "Class Notes",
+      short_note: "Short Notes / Mind Maps", class_question: "Class Questions",
+    };
+    return labels[type] || type.replaceAll("_", " ");
+  }
+
+  async function deleteStudyMaterial(material: StudyMaterial) {
+    if (!window.confirm(`Delete "${material.title}"?\n\nThis removes the database record and uploaded PDF.`)) return;
+    setDeletingStudyId(material.id);
+    resetMessages();
+    try {
+      const access = await checkAdminAccess();
+      if (!access.user || !access.isAdmin) throw new Error("Admin access is required. Please sign in again.");
+      const { error: dbError } = await supabase.from("materials").delete().eq("id", material.id);
+      if (dbError) throw new Error(`Could not delete database record: ${dbError.message}`);
+      const { error: storageError } = await supabase.storage.from("materials").remove([material.file_path]);
+      if (storageError) {
+        setError(`Record deleted, but the PDF could not be removed from storage: ${storageError.message}`);
+      } else {
+        setMessage("Study material deleted successfully.");
+      }
+      await loadStudyMaterials();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not delete study material.");
+    } finally { setDeletingStudyId(null); }
+  }
+
+  function startStudyReplace(material: StudyMaterial) {
+    setUploadMode("study");
+    setStudySubjectId(material.subject_id);
+    setMaterialType(material.material_type);
+    setSection(material.section);
+    setUnitNumber(String(material.unit_number || 1));
+    setExamYear(material.exam_year ? String(material.exam_year) : "");
+    setTitle(material.title);
+    setFile(null);
+    setReplacingStudyId(material.id);
+    setReplacingId(null);
+    setMessage(`Replacement mode: choose a new PDF for "${material.title}".`);
+    setError("");
+    const input = document.getElementById("admin-file") as HTMLInputElement | null;
+    if (input) input.value = "";
+  }
+
+  async function replaceStudyMaterial(material: StudyMaterial) {
+    if (!file || file.type !== "application/pdf") { setError("Select a PDF file to replace this material."); return; }
+    if (file.size > 50 * 1024 * 1024) { setError("File size must be 50 MB or less."); return; }
+    if (!title.trim()) { setError("Please enter a title."); return; }
+    setUploading(true); resetMessages();
+    let newPath = "";
+    try {
+      const access = await checkAdminAccess();
+      if (!access.user || !access.isAdmin) throw new Error("Admin access is required. Please sign in again.");
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_");
+      newPath = `study-materials/${material.subject_id}/${crypto.randomUUID()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("materials").upload(newPath, file, { contentType: "application/pdf", upsert: false });
+      if (uploadError) throw new Error(uploadError.message);
+      const { error: updateError } = await supabase.from("materials").update({ title: title.trim(), file_name: file.name, file_path: newPath, file_type: file.type, file_size: file.size, updated_at: new Date().toISOString() }).eq("id", material.id);
+      if (updateError) {
+        await supabase.storage.from("materials").remove([newPath]);
+        throw new Error(updateError.message);
+      }
+      const { error: oldFileError } = await supabase.storage.from("materials").remove([material.file_path]);
+      setMessage(oldFileError ? `Material replaced, but the old PDF could not be removed: ${oldFileError.message}` : "Study material replaced successfully.");
+      setReplacingStudyId(null); setTitle(""); setFile(null);
+      const input = document.getElementById("admin-file") as HTMLInputElement | null;
+      if (input) input.value = "";
+      await loadStudyMaterials();
+    } catch (e) { setError(e instanceof Error ? e.message : "Replacement failed."); }
+    finally { setUploading(false); }
   }
 
   function resetMessages() {
@@ -527,7 +646,14 @@ export default function AdminPage() {
       const finalSection =
         materialType === "unit_pdf"
           ? "unit_pdf"
-          : section;
+          : materialType === "question_bank"
+            ? "question_bank"
+            : "class_notes";
+
+      const finalMaterialType =
+        materialType === "question_bank"
+          ? "class_question"
+          : materialType;
 
       const {
         error: dbError,
@@ -539,10 +665,9 @@ export default function AdminPage() {
           title: title.trim(),
           section: finalSection,
           material_type:
-            materialType,
+            finalMaterialType,
           unit_number:
-            materialType ===
-            "unit_pdf"
+            materialType !== "question_bank"
               ? Number(unitNumber)
               : null,
           exam_year: examYear
@@ -569,6 +694,7 @@ export default function AdminPage() {
       setMessage(
         "Study material uploaded successfully."
       );
+      await loadStudyMaterials();
 
       setTitle("");
       setFile(null);
@@ -755,6 +881,13 @@ export default function AdminPage() {
 
   async function handleUpload() {
     resetMessages();
+
+    if (replacingStudyId) {
+      const studyMaterial = studyMaterials.find((item) => item.id === replacingStudyId);
+      if (!studyMaterial) { setError("Study material selected for replacement could not be found."); setReplacingStudyId(null); return; }
+      await replaceStudyMaterial(studyMaterial);
+      return;
+    }
 
     if (replacingId) {
       const material =
@@ -1218,7 +1351,7 @@ export default function AdminPage() {
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-slate-800">
-              {replacingId
+              {replacingStudyId ? "Replace Study Material" : replacingId
                 ? "Replace Lab Material"
                 : "Upload Material"}
             </h2>
@@ -1232,10 +1365,8 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => {
-                if (replacingId) {
-                  cancelReplace();
-                }
-
+                if (replacingId) cancelReplace();
+                if (replacingStudyId) { setReplacingStudyId(null); setTitle(""); setFile(null); }
                 setUploadMode("study");
                 resetMessages();
               }}
@@ -1293,65 +1424,29 @@ export default function AdminPage() {
                 </select>
               </label>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
-                    Section
-                  </span>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Category
+                </span>
+                <select
+                  value={materialType}
+                  onChange={(event) => {
+                    const nextCategory = event.target.value;
+                    setMaterialType(nextCategory);
+                    setSection(nextCategory === "unit_pdf" ? "unit_pdf" : nextCategory === "question_bank" ? "question_bank" : "class_notes");
+                    setExamYear("");
+                  }}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base"
+                >
+                  <option value="unit_pdf">Unit PDF</option>
+                  <option value="class_note">Class Notes</option>
+                  <option value="short_note">Short Notes / Mind Maps</option>
+                  <option value="class_question">Class Questions</option>
+                  <option value="question_bank">Question Bank</option>
+                </select>
+              </label>
 
-                  <select
-                    value={section}
-                    onChange={(event) =>
-                      setSection(
-                        event.target.value
-                      )
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base"
-                  >
-                    <option value="unit_pdf">
-                      Unit PDF
-                    </option>
-
-                    <option value="class_notes">
-                      Class Notes
-                    </option>
-
-                    <option value="question_bank">
-                      Question Bank
-                    </option>
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
-                    Material Type
-                  </span>
-
-                  <select
-                    value={materialType}
-                    onChange={(event) =>
-                      setMaterialType(
-                        event.target.value
-                      )
-                    }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base"
-                  >
-                    {studyMaterialTypes.map(
-                      (type) => (
-                        <option
-                          key={type.value}
-                          value={type.value}
-                        >
-                          {type.label}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-              </div>
-
-              {materialType ===
-                "unit_pdf" && (
+              {materialType !== "question_bank" && (
                 <label className="block">
                   <span className="mb-2 block text-sm font-medium text-slate-700">
                     Unit
@@ -1380,9 +1475,9 @@ export default function AdminPage() {
                 </label>
               )}
 
-              <label className="block">
+              {materialType === "question_bank" && <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">
-                  Exam Year
+                  Exam Year (optional)
                 </span>
 
                 <input
@@ -1396,7 +1491,7 @@ export default function AdminPage() {
                   inputMode="numeric"
                   className="w-full rounded-xl border border-slate-200 px-4 py-3 text-base outline-none"
                 />
-              </label>
+              </label>}
             </div>
           ) : (
             <div className="space-y-5">
@@ -1570,19 +1665,13 @@ export default function AdminPage() {
                 disabled={uploading}
                 className="flex-1 rounded-xl bg-slate-800 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {uploading
-                  ? replacingId
-                    ? "Replacing..."
-                    : "Uploading..."
-                  : replacingId
-                    ? "Replace PDF"
-                    : "Upload PDF"}
+                {uploading ? (replacingId || replacingStudyId ? "Replacing..." : "Uploading...") : (replacingId || replacingStudyId ? "Replace PDF" : "Upload PDF")}
               </button>
 
-              {replacingId && (
+              {(replacingId || replacingStudyId) && (
                 <button
                   type="button"
-                  onClick={cancelReplace}
+                  onClick={() => { if (replacingId) cancelReplace(); setReplacingStudyId(null); if (!replacingId) { setTitle(""); setFile(null); resetMessages(); } }}
                   disabled={uploading}
                   className="rounded-xl border border-slate-200 px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
@@ -1591,6 +1680,17 @@ export default function AdminPage() {
               )}
             </div>
           </div>
+        </section>
+
+        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div><h2 className="text-xl font-semibold text-slate-800">Current Study Materials</h2><p className="mt-1 text-sm text-slate-500">Manage uploaded study PDFs. Replace keeps the material's category and unit.</p></div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <select value={managerStudyFilter} onChange={(e) => setManagerStudyFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"><option value="all">All Subjects</option>{studySubjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select>
+              <select value={managerStudyCategory} onChange={(e) => setManagerStudyCategory(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"><option value="all">All Categories</option>{studyMaterialTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select>
+            </div>
+          </div>
+          {studyMaterialsLoading ? <p className="py-8 text-center text-sm text-slate-500">Loading study materials...</p> : filteredStudyMaterials.length === 0 ? <div className="rounded-2xl bg-slate-50 px-5 py-8 text-center"><p className="text-sm font-medium text-slate-700">No study materials found.</p><p className="mt-1 text-xs text-slate-500">Upload a study PDF above; it will appear here.</p></div> : <div className="space-y-3">{filteredStudyMaterials.map((item) => <div key={item.id} className="rounded-2xl border border-slate-200 p-4"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-wide text-slate-400">{item.subject?.name || subjects.find((s) => s.id === item.subject_id)?.name || "Subject"}</p><h3 className="mt-1 break-words font-semibold text-slate-800">{item.title}</h3><div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-full bg-slate-100 px-3 py-1">{formatStudyCategory(item.material_type)}</span>{item.unit_number && <span className="rounded-full bg-slate-100 px-3 py-1">Unit {item.unit_number}</span>}{item.exam_year && <span className="rounded-full bg-slate-100 px-3 py-1">Year {item.exam_year}</span>}<span className="rounded-full bg-slate-100 px-3 py-1">{formatDate(item.updated_at || item.created_at)}</span><span className="max-w-full truncate rounded-full bg-slate-100 px-3 py-1">{item.file_name || "PDF"}</span></div></div><div className="flex shrink-0 gap-2"><button type="button" onClick={() => startStudyReplace(item)} disabled={uploading || deletingStudyId === item.id} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Replace</button><button type="button" onClick={() => deleteStudyMaterial(item)} disabled={uploading || deletingStudyId === item.id || replacingStudyId === item.id} className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">{deletingStudyId === item.id ? "Deleting..." : "Delete"}</button></div></div></div>)}</div>}
         </section>
 
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
