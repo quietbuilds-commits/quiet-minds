@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 function SearchIcon() {
@@ -103,7 +104,6 @@ const subjects = [
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#E8F8F6] text-[#263B5C]">
-
       {/* HEADER */}
       <header className="border-b border-[#E8DED4] bg-[#FFFDF9]">
         <div className="mx-auto flex h-[64px] max-w-[1180px] items-center justify-between px-6">
@@ -127,7 +127,7 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/ece/year-1/sem-1"
+              href="/syllabus"
               className="text-[#42516B] transition hover:text-[#3159C9]"
             >
               Syllabus
@@ -154,7 +154,6 @@ export default function Home() {
       {/* HERO */}
       <section className="bg-[#EAF3FF] px-5 py-7 sm:px-7 sm:py-9">
         <div className="mx-auto grid max-w-[900px] grid-cols-[1.05fr_0.75fr] items-start gap-4">
-
           {/* TEXT BOX */}
           <div className="relative max-w-[480px] justify-self-start overflow-hidden rounded-[18px] border border-[#D2E2F8] bg-[#F7FBFF] px-4 py-3 shadow-[0_8px_24px_rgba(66,103,150,0.06)] sm:px-5 sm:py-4">
             <div className="absolute -bottom-12 -left-10 h-24 w-24 rounded-full bg-[#FFE2D3]" />
@@ -164,7 +163,7 @@ export default function Home() {
                 Where ideas begin.
               </span>
 
-              <h1 className="mt-3 text-[30px] font-extrabold leading-[1.02] tracking-[-1.3px] text-[#173D7A] sm:text-[40px]">
+              <h1 className="mt-3 text-[24px] font-extrabold leading-[1.08] tracking-[-0.8px] text-[#173D7A] sm:text-[30px]">
                 Your notes.
                 <br />
                 Your subjects.
@@ -174,7 +173,7 @@ export default function Home() {
 
               <div className="mt-4 h-[3px] w-[46px] rounded-full bg-[#5E87CC]" />
 
-              <p className="mt-4 max-w-[460px] text-[14px] leading-5.5 text-[#5D7698]">
+              <p className="mt-4 max-w-[460px] text-[12px] leading-[18px] text-[#5D7698]">
                 A simple study space for students.
                 <br />
                 Find notes, question papers and study materials in one place.
@@ -182,7 +181,7 @@ export default function Home() {
 
               <Link
                 href="/ece"
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#3159C9] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_7px_18px_rgba(49,89,201,0.2)] transition hover:-translate-y-0.5"
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#3159C9] px-4 py-2 text-[12px] font-semibold text-white shadow-[0_7px_18px_rgba(49,89,201,0.2)] transition hover:-translate-y-0.5"
               >
                 Explore ECE
                 <span className="text-[16px]">→</span>
@@ -202,7 +201,7 @@ export default function Home() {
               <GraduationCap />
             </div>
 
-            <h2 className="relative mt-5 text-[25px] font-bold text-[#5B4A3B]">
+            <h2 className="relative mt-4 text-[20px] font-bold text-[#5B4A3B]">
               ECE
             </h2>
 
@@ -217,25 +216,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* EXAM SECTION */}
-      <section className="bg-[#FFF0E5] px-6 py-7">
-        <div className="mx-auto max-w-[1000px]">
-          <div className="rounded-[20px] border border-[#F0CFB8] bg-[#FFF9F5] px-6 py-5">
-            <p className="text-[12px] font-bold tracking-[2px] text-[#B5673D]">
-              EXAM SECTION
-            </p>
-
-            <p className="mt-2 text-[13px] text-[#987661]">
-              Your exam resources will appear here.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* SUBJECTS */}
       <section className="bg-[#E8F8F6] px-6 py-9">
         <div className="mx-auto max-w-[1000px]">
-
           <div className="flex items-end justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[2px] text-[#7862A9]">
@@ -306,7 +289,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/ece/year-1/sem-1"
+            href="/syllabus"
             className="text-[13px] font-medium text-[#6C7890] transition hover:text-[#3159C9]"
           >
             Syllabus
