@@ -39,7 +39,6 @@ export default function Unit2Page() {
         .from("materials")
         .select("id, title, file_name, file_path, created_at")
         .eq("subject_id", subject.id)
-        .eq("section", "class_notes")
         .eq("material_type", "unit_pdf")
         .eq("unit_number", 2)
         .order("created_at", {

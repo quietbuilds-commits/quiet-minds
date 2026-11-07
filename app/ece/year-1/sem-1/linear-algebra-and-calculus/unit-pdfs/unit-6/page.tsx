@@ -42,7 +42,6 @@ export default function Unit6Page() {
           "id, title, file_name, file_path, file_type, created_at"
         )
         .eq("subject_id", subject.id)
-        .eq("section", "class_notes")
         .eq("material_type", "unit_pdf")
         .eq("unit_number", 6)
         .order("created_at", { ascending: false });
