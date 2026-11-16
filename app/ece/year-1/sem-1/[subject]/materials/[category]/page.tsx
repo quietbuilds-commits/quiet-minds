@@ -1,27 +1,26 @@
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-const subjectCodes: Record<string, string> = {
-  "linear-algebra-and-calculus": "26MA101T",
-  "engineering-chemistry": "26CH101T",
-  "communicative-english": "26EN101T",
-  "programming-for-problem-solving": "26CS101T",
-  "basics-of-engineering": "26EE101T",
-};
-
-const subjectNames: Record<string, string> = {
-  "linear-algebra-and-calculus": "Linear Algebra & Calculus",
-  "engineering-chemistry": "Engineering Chemistry",
-  "communicative-english": "Communicative English",
-  "programming-for-problem-solving": "Programming for Problem Solving",
-  "basics-of-engineering": "Basics of Engineering",
-};
+function makeSlug(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 const categories: Record<
   string,
   { title: string; description: string; materialType: string; color: string }
 > = {
+  "unit-pdfs": {
+    title: "Unit PDFs",
+    description: "Complete unit-wise study material",
+    materialType: "unit_pdf",
+    color: "#EAF4FF",
+  },
   "class-notes": {
     title: "Class Notes",
     description: "Notes collected from classes",
@@ -49,26 +48,53 @@ export default async function MaterialsPage({
 }) {
   const { subject, category } = await params;
 
-  const subjectCode = subjectCodes[subject];
-  const subjectName = subjectNames[subject];
   const selectedCategory = categories[category];
 
-  if (!subjectCode || !subjectName || !selectedCategory) {
-    return (
-      <main className="min-h-screen bg-[#FCFBF7] px-6 py-12">
-        <p>Page not found.</p>
-        <Link href="/ece/year-1/sem-1" className="mt-4 inline-block underline">
-          Back to subjects
-        </Link>
-      </main>
-    );
+  if (!selectedCategory) {
+    notFound();
   }
+
+  // Get Year 1, Semester 1
+  const { data: semester, error: semesterError } = await supabase
+    .from("semesters")
+    .select("id")
+    .eq("academic_year", 1)
+    .eq("semester_number", 1)
+    .single();
+
+  if (semesterError || !semester) {
+    console.error("Semester lookup failed:", semesterError?.message);
+    throw new Error("Unable to load semester information.");
+  }
+
+  // Get theory subjects belonging to Semester 1
+  const { data: subjects, error } = await supabase
+    .from("subjects")
+    .select("id, name, code, subject_type")
+    .eq("semester_id", semester.id)
+    .eq("subject_type", "theory");
+
+  if (error) {
+    console.error("Subject lookup failed:", error.message);
+    throw new Error("Unable to load subjects.");
+  }
+
+  const subjectData = (subjects ?? []).find(
+    (item) => makeSlug(item.name) === subject
+  );
+
+  if (!subjectData) {
+    notFound();
+  }
+
+  const subjectName = subjectData.name;
+  const basePath = `/ece/year-1/sem-1/${subject}`;
 
   return (
     <main className="min-h-screen bg-[#FCFBF7] px-6 py-10 text-[#252525]">
       <div className="mx-auto max-w-4xl">
         <Link
-          href={`/ece/year-1/sem-1/${subject}`}
+          href={basePath}
           className="text-sm text-gray-500 hover:text-gray-800"
         >
           ← Back to {subjectName}
@@ -80,9 +106,11 @@ export default async function MaterialsPage({
             style={{ backgroundColor: selectedCategory.color }}
           >
             <p className="text-sm text-gray-500">{subjectName}</p>
+
             <h1 className="mt-2 text-3xl font-semibold tracking-tight">
               {selectedCategory.title}
             </h1>
+
             <p className="mt-2 text-sm text-gray-600">
               {selectedCategory.description}
             </p>
@@ -92,7 +120,7 @@ export default async function MaterialsPage({
             {[1, 2, 3, 4, 5, 6].map((unit) => (
               <Link
                 key={unit}
-                href={`/ece/year-1/sem-1/${subject}/materials/${category}/${unit}`}
+                href={`${basePath}/materials/${category}/${unit}`}
                 className="group rounded-2xl border border-black/5 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="flex items-center justify-between gap-3">
@@ -100,13 +128,16 @@ export default async function MaterialsPage({
                     <p className="text-xs tracking-widest text-gray-400">
                       UNIT {String(unit).padStart(2, "0")}
                     </p>
+
                     <h2 className="mt-2 text-lg font-semibold">
                       Unit {unit}
                     </h2>
+
                     <p className="mt-1 text-sm text-gray-500">
                       View uploaded PDFs
                     </p>
                   </div>
+
                   <span className="text-xl text-gray-400 transition group-hover:translate-x-1">
                     →
                   </span>

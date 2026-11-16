@@ -49,9 +49,18 @@ type LabMaterial = {
 
 const studyMaterialTypes = [
   { value: "unit_pdf", label: "Unit PDF" },
-  { value: "class_note", label: "Class Note" },
-  { value: "short_note", label: "Short Note" },
-  { value: "class_question", label: "Class Question" },
+  { value: "class_note", label: "Class Notes" },
+  { value: "short_note", label: "Short Notes" },
+  { value: "mind_map", label: "Mind Maps" },
+  { value: "class_question", label: "Class Questions" },
+  { value: "question_bank", label: "Question Bank" },
+];
+
+const questionBankTypes = [
+  { value: "pyq", label: "Previous Year Questions (PYQ)" },
+  { value: "pca", label: "PCA" },
+  { value: "ca", label: "CA" },
+  { value: "esa", label: "ESA" },
 ];
 
 const experiments = Array.from({ length: 16 }, (_, index) => index + 1);
@@ -109,6 +118,8 @@ export default function AdminPage() {
     useState("unit_pdf");
   const [materialType, setMaterialType] =
     useState("unit_pdf");
+  const [questionBankType, setQuestionBankType] =
+    useState("pyq");
   const [unitNumber, setUnitNumber] =
     useState("1");
   const [examYear, setExamYear] =

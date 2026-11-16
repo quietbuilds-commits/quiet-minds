@@ -108,82 +108,104 @@ export default function EcePage() {
           </span>
         </div>
 
-        {/* Year 1 card */}
-        <Link href="/ece/year-1" className="block group">
-          <div className="relative overflow-hidden rounded-[2rem] bg-[#dff1ea] border border-black/5 p-8 md:p-12 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+        {/* Academic Year Cards */}
+        <div className="grid grid-cols-1 gap-6">
+          {[
+            {
+              year: 1,
+              color: "bg-[#dff1ea]",
+              description: "Your first-year subjects, notes and academic resources.",
+            },
+            {
+              year: 2,
+              color: "bg-[#e7e2ff]",
+              description: "Continue exploring your subjects and academic resources.",
+            },
+            {
+              year: 3,
+              color: "bg-[#ffe8d9]",
+              description: "Build deeper knowledge through your third-year subjects.",
+            },
+            {
+              year: 4,
+              color: "bg-[#fff0b8]",
+              description: "Bring your learning together in your final academic year.",
+            },
+          ].map((item) => (
+            <Link
+              key={item.year}
+              href={`/ece/year-${item.year}`}
+              className="block group"
+            >
+              <div
+                className={`relative overflow-hidden rounded-[2rem] ${item.color} border border-black/5 p-8 md:p-12 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl`}
+              >
+                <div className="absolute -right-10 -top-10 w-44 h-44 bg-white/50 rounded-full" />
+                <div className="absolute right-24 bottom-[-60px] w-40 h-40 bg-[#d7d0ff]/60 rounded-full" />
 
-            <div className="absolute -right-10 -top-10 w-44 h-44 bg-[#fff0b8] rounded-full opacity-80" />
+                <div className="relative flex items-center justify-between gap-8">
+                  <div>
+                    <p className="text-sm font-semibold text-black/45 mb-3">
+                      YEAR
+                    </p>
 
-            <div className="absolute right-24 bottom-[-60px] w-40 h-40 bg-[#d7d0ff] rounded-full opacity-70" />
+                    <h3 className="text-4xl md:text-6xl font-black tracking-[-0.07em]">
+                      {String(item.year).padStart(2, "0")}
+                    </h3>
 
-            <div className="relative flex items-center justify-between gap-8">
+                    <p className="mt-5 text-base text-black/55 max-w-md leading-6">
+                      {item.description}
+                    </p>
+                  </div>
 
-              <div>
-                <p className="text-sm font-semibold text-black/45 mb-3">
-                  YEAR
-                </p>
+                  <div className="text-4xl md:text-6xl font-light group-hover:translate-x-2 transition-transform">
+                    →
+                  </div>
+                </div>
 
-                <h3 className="text-4xl md:text-6xl font-black tracking-[-0.07em]">
-                  01
-                </h3>
-
-                <p className="mt-5 text-base text-black/55 max-w-md leading-6">
-                  Your first-year subjects, notes and academic resources.
-                </p>
+                <div className="relative flex flex-wrap gap-3 mt-10">
+                  <span className="px-4 py-2 rounded-full bg-white/70 text-sm">
+                    Study Material
+                  </span>
+                  <span className="px-4 py-2 rounded-full bg-white/70 text-sm">
+                    Question Bank
+                  </span>
+                  <span className="px-4 py-2 rounded-full bg-white/70 text-sm">
+                    Notes
+                  </span>
+                </div>
               </div>
+            </Link>
+          ))}
+        </div>
+       </section>
 
-              <div className="text-4xl md:text-6xl font-light group-hover:translate-x-2 transition-transform">
-                →
-              </div>
+        {/* Identity */}
+        <section className="relative z-10 border-y border-black/5 bg-white">
 
-            </div>
+          <div className="max-w-6xl mx-auto px-6 md:px-12 py-24 md:py-32">
 
-            <div className="relative flex flex-wrap gap-3 mt-10">
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-black/35 mb-6">
+              A little beyond classroom.
+            </p>
 
-              <span className="px-4 py-2 rounded-full bg-white/70 text-sm">
-                Study Material
-              </span>
-
-              <span className="px-4 py-2 rounded-full bg-white/70 text-sm">
-                Question Bank
-              </span>
-
-              <span className="px-4 py-2 rounded-full bg-white/70 text-sm">
-                Notes
-              </span>
-
-            </div>
+            <h2 className="text-3xl md:text-5xl font-bold tracking-[-0.06em] max-w-3xl leading-tight">
+              Learn at your pace.
+              <br />
+              Keep what matters.
+            </h2>
 
           </div>
-        </Link>
-      </section>
+        </section>
 
-      {/* Identity */}
-      <section className="relative z-10 border-y border-black/5 bg-white">
+        {/* Footer */}
+        <footer className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between gap-4 text-sm text-black/40">
 
-        <div className="max-w-6xl mx-auto px-6 md:px-12 py-24 md:py-32">
+          <p>QUIET MINDS</p>
 
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-black/35 mb-6">
-            A little beyond classroom.
-          </p>
+          <p>Study quietly. Build steadily.</p>
 
-          <h2 className="text-3xl md:text-5xl font-bold tracking-[-0.06em] max-w-3xl leading-tight">
-            Learn at your pace.
-            <br />
-            Keep what matters.
-          </h2>
-
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row justify-between gap-4 text-sm text-black/40">
-
-        <p>QUIET MINDS</p>
-
-        <p>Study quietly. Build steadily.</p>
-
-      </footer>
+        </footer>
 
     </main>
   );

@@ -1,27 +1,25 @@
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-const subjectCodes: Record<string, string> = {
-  "linear-algebra-and-calculus": "26MA101T",
-  "engineering-chemistry": "26CH101T",
-  "communicative-english": "26EN101T",
-  "programming-for-problem-solving": "26CS101T",
-  "basics-of-engineering": "26EE101T",
-};
-
-const subjectNames: Record<string, string> = {
-  "linear-algebra-and-calculus": "Linear Algebra & Calculus",
-  "engineering-chemistry": "Engineering Chemistry",
-  "communicative-english": "Communicative English",
-  "programming-for-problem-solving": "Programming for Problem Solving",
-  "basics-of-engineering": "Basics of Engineering",
-};
+function makeSlug(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 const categories: Record<
   string,
   { title: string; materialType: string; color: string }
 > = {
+  "unit-pdfs": {
+    title: "Unit PDFs",
+    materialType: "unit_pdf",
+    color: "#EAF2FF",
+  },
   "class-notes": {
     title: "Class Notes",
     materialType: "class_note",
@@ -61,86 +59,96 @@ export default async function MaterialUnitPage({
 }) {
   const { subject, category, unit } = await params;
   const unitNumber = Number(unit);
-
-  const subjectCode = subjectCodes[subject];
-  const subjectName = subjectNames[subject];
   const selectedCategory = categories[category];
 
   if (
-    !subjectCode ||
-    !subjectName ||
     !selectedCategory ||
     !Number.isInteger(unitNumber) ||
     unitNumber < 1 ||
     unitNumber > 6
   ) {
-    return (
-      <main className="min-h-screen bg-[#FCFBF7] px-6 py-12">
-        <p>Page not found.</p>
-        <Link href="/ece/year-1/sem-1" className="mt-4 inline-block underline">
-          Back to subjects
-        </Link>
-      </main>
-    );
+    notFound();
   }
 
-  const {
-    data: subjectData,
-    error: subjectError,
-  } = await supabase
-    .from("subjects")
+  // Find Year 1, Semester 1
+  const { data: semester, error: semesterError } = await supabase
+    .from("semesters")
     .select("id")
-    .eq("code", subjectCode)
+    .eq("academic_year", 1)
+    .eq("semester_number", 1)
     .single();
+
+  if (semesterError || !semester) {
+    throw new Error("Unable to load Semester 1.");
+  }
+
+  // Load only theory subjects from this semester
+  const { data: subjects, error: subjectError } = await supabase
+    .from("subjects")
+    .select("id, name, code, subject_type")
+    .eq("semester_id", semester.id)
+    .eq("subject_type", "theory");
+
+  if (subjectError || !subjects) {
+    throw new Error("Unable to load subjects.");
+  }
+
+  const subjectData = subjects.find(
+    (item) => makeSlug(item.name) === subject
+  );
+
+  if (!subjectData) {
+    notFound();
+  }
+
+  const subjectName = subjectData.name;
+  const subjectCode = subjectData.code;
+
+  const { data, error } = await supabase
+    .from("materials")
+    .select(
+      "id, title, file_name, file_path, unit_number, material_type, section, created_at"
+    )
+    .eq("subject_id", subjectData.id)
+    .eq("material_type", selectedCategory.materialType)
+    .eq("unit_number", unitNumber)
+    .order("created_at", { ascending: false });
 
   let materials: Material[] = [];
   let loadError = false;
 
-  if (subjectError || !subjectData) {
-    console.error("Subject lookup failed:", subjectError?.message);
+  if (error) {
+    console.error("Materials query failed:", error.message);
     loadError = true;
   } else {
-    const { data, error } = await supabase
-      .from("materials")
-      .select(
-        "id, title, file_name, file_path, unit_number, material_type, section, created_at"
-      )
-      .eq("subject_id", subjectData.id)
-      .eq("material_type", selectedCategory.materialType)
-      .eq("unit_number", unitNumber)
-      .order("created_at", { ascending: false });
+    materials = (data ?? []) as Material[];
 
-    if (error) {
-      console.error("Materials query failed:", error.message);
-      loadError = true;
-    } else {
-      materials = (data ?? []) as Material[];
-      console.log("Quiet Minds material lookup:", {
-        subject,
-        subjectCode,
-        category,
-        expectedMaterialType: selectedCategory.materialType,
-        unitNumber,
-        resultsFound: materials.length,
-      });
+    console.log("Quiet Minds material lookup:", {
+      subject,
+      subjectCode,
+      category,
+      expectedMaterialType: selectedCategory.materialType,
+      unitNumber,
+      resultsFound: materials.length,
+    });
 
-      // If nothing matched, inspect recent materials for this subject
-      // to help identify an admin-upload field mismatch.
-      if (materials.length === 0) {
-        const { data: recent, error: diagnosticError } = await supabase
-          .from("materials")
-          .select(
-            "title, material_type, section, unit_number, subject_id, created_at"
-          )
-          .eq("subject_id", subjectData.id)
-          .order("created_at", { ascending: false })
-          .limit(10);
+    if (materials.length === 0) {
+      const { data: recent, error: diagnosticError } = await supabase
+        .from("materials")
+        .select(
+          "title, material_type, section, unit_number, subject_id, created_at"
+        )
+        .eq("subject_id", subjectData.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-        if (diagnosticError) {
-          console.error("Material diagnostic failed:", diagnosticError.message);
-        } else {
-          console.log("Recent materials for this subject:", recent);
-        }
+      if (diagnosticError) {
+        console.error(
+          "Material diagnostic failed:",
+          diagnosticError.message
+        );
+      } else {
+        console.log("Recent materials for this subject:", recent);
       }
     }
   }
@@ -151,17 +159,21 @@ export default async function MaterialUnitPage({
         return { ...material, fileUrl: null as string | null };
       }
 
-      const { data, error } = await supabase.storage
+      const { data: urlData, error: urlError } = await supabase.storage
         .from("materials")
         .createSignedUrl(material.file_path, 60 * 10);
 
-      if (error) {
-        console.error("Signed URL failed:", error.message, material.file_path);
+      if (urlError) {
+        console.error(
+          "Signed URL failed:",
+          urlError.message,
+          material.file_path
+        );
       }
 
       return {
         ...material,
-        fileUrl: data?.signedUrl ?? null,
+        fileUrl: urlData?.signedUrl ?? null,
       };
     })
   );
@@ -182,9 +194,11 @@ export default async function MaterialUnitPage({
             style={{ backgroundColor: selectedCategory.color }}
           >
             <p className="text-sm text-gray-500">{subjectName}</p>
+
             <h1 className="mt-2 text-3xl font-semibold tracking-tight">
               Unit {unitNumber}
             </h1>
+
             <p className="mt-2 text-sm text-gray-600">
               {selectedCategory.title} · All uploaded PDFs
             </p>
@@ -207,6 +221,7 @@ export default async function MaterialUnitPage({
                       <h2 className="font-medium">
                         {material.title || material.file_name || "Study PDF"}
                       </h2>
+
                       {material.file_name && (
                         <p className="mt-1 break-words text-sm text-gray-500">
                           {material.file_name}
@@ -236,6 +251,7 @@ export default async function MaterialUnitPage({
                 <p className="font-medium">
                   No PDFs uploaded for this unit yet.
                 </p>
+
                 <p className="mt-2 text-sm text-gray-500">
                   PDFs uploaded for this subject, category, and unit will
                   appear here.
