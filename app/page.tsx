@@ -9,8 +9,8 @@ import Link from "next/link";
 
 // ✏️ CHANGE THIS QUOTE EVERY WEEK
 const WEEKLY_QUOTE = {
-  text: "Knowledge which is acquired under compulsion obtains no hold on the mind.",
-  author: "Plato",
+  text: "QUIET MINDS IS SOON GOING TO HIRE TECHNICAL SKILLED STUDENTS BE READY ",
+  author: ".",
 };
 
 const recentUploads = [
