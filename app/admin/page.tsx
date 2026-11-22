@@ -65,6 +65,27 @@ const questionBankTypes = [
 
 const experiments = Array.from({ length: 16 }, (_, index) => index + 1);
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const ALLOWED_FILE_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  c: "text/plain",
+  dwg: "application/octet-stream",
+};
+
+function getAllowedFileType(file: File): string | null {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  return ALLOWED_FILE_TYPES[extension] || null;
+}
+
+function validateUploadFile(file: File | null): string | null {
+  if (!file) return "Please select a file.";
+  if (!getAllowedFileType(file)) {
+    return "Only PDF (.pdf), C source (.c), and AutoCAD drawing (.dwg) files are allowed.";
+  }
+  if (file.size > MAX_FILE_SIZE) return "File size must be 50 MB or less.";
+  return null;
+}
+
 function formatLabMaterialType(
   type: LabMaterial["material_type"]
 ): string {
@@ -137,9 +158,7 @@ export default function AdminPage() {
 
   // Common
   const [title, setTitle] = useState("");
-  const [file, setFile] =
-    useState<File | null>(null);
-
+  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] =
     useState(false);
   const [message, setMessage] =
@@ -379,9 +398,9 @@ export default function AdminPage() {
       loadedSubjects.find(
         (subject) =>
           subject.subject_type ===
-            "theory" ||
+          "theory" ||
           subject.subject_type ===
-            "activity"
+          "activity"
       );
 
     const firstLab =
@@ -461,7 +480,7 @@ export default function AdminPage() {
   }
 
   async function deleteStudyMaterial(material: StudyMaterial) {
-    if (!window.confirm(`Delete "${material.title}"?\n\nThis removes the database record and uploaded PDF.`)) return;
+    if (!window.confirm(`Delete "${material.title}"?\n\nThis removes the database record and uploaded file.`)) return;
     setDeletingStudyId(material.id);
     resetMessages();
     try {
@@ -499,19 +518,22 @@ export default function AdminPage() {
   }
 
   async function replaceStudyMaterial(material: StudyMaterial) {
-    if (!file || file.type !== "application/pdf") { setError("Select a PDF file to replace this material."); return; }
-    if (file.size > 50 * 1024 * 1024) { setError("File size must be 50 MB or less."); return; }
+    const fileValidationError = validateUploadFile(file);
+    if (fileValidationError) { setError(fileValidationError); return; }
+    const selectedFile = file;
+    if (!selectedFile) { setError("Please select a file."); return; }
+    const contentType = getAllowedFileType(selectedFile)!;
     if (!title.trim()) { setError("Please enter a title."); return; }
     setUploading(true); resetMessages();
     let newPath = "";
     try {
       const access = await checkAdminAccess();
       if (!access.user || !access.isAdmin) throw new Error("Admin access is required. Please sign in again.");
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_");
+      const safeName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/_+/g, "_");
       newPath = `study-materials/${material.subject_id}/${crypto.randomUUID()}-${safeName}`;
-      const { error: uploadError } = await supabase.storage.from("materials").upload(newPath, file, { contentType: "application/pdf", upsert: false });
+      const { error: uploadError } = await supabase.storage.from("materials").upload(newPath, selectedFile, { contentType, upsert: false });
       if (uploadError) throw new Error(uploadError.message);
-      const { error: updateError } = await supabase.from("materials").update({ title: title.trim(), file_name: file.name, file_path: newPath, file_type: file.type, file_size: file.size, updated_at: new Date().toISOString() }).eq("id", material.id);
+      const { error: updateError } = await supabase.from("materials").update({ title: title.trim(), file_name: selectedFile.name, file_path: newPath, file_type: contentType, file_size: selectedFile.size, updated_at: new Date().toISOString() }).eq("id", material.id);
       if (updateError) {
         await supabase.storage.from("materials").remove([newPath]);
         throw new Error(updateError.message);
@@ -583,22 +605,17 @@ export default function AdminPage() {
       return;
     }
 
-    if (!file) {
-      setError("Please select a PDF.");
+    const fileValidationError = validateUploadFile(file);
+    if (fileValidationError) {
+      setError(fileValidationError);
       return;
     }
-
-    if (file.type !== "application/pdf") {
-      setError("Only PDF files are allowed.");
+    const selectedFile = file;
+    if (!selectedFile) {
+      setError("Please select a file.");
       return;
     }
-
-    if (file.size > 50 * 1024 * 1024) {
-      setError(
-        "File size must be 50 MB or less."
-      );
-      return;
-    }
+    const contentType = getAllowedFileType(selectedFile)!;
 
     if (!title.trim()) {
       setError("Please enter a title.");
@@ -624,7 +641,7 @@ export default function AdminPage() {
         );
       }
 
-      const safeFileName = file.name
+      const safeFileName = selectedFile.name
         .replace(
           /[^a-zA-Z0-9._-]/g,
           "_"
@@ -640,10 +657,9 @@ export default function AdminPage() {
         .from("materials")
         .upload(
           filePath,
-          file,
+          selectedFile,
           {
-            contentType:
-              "application/pdf",
+            contentType,
             upsert: false,
           }
         );
@@ -684,10 +700,10 @@ export default function AdminPage() {
           exam_year: examYear
             ? Number(examYear)
             : null,
-          file_name: file.name,
+          file_name: selectedFile.name,
           file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
+          file_type: contentType,
+          file_size: selectedFile.size,
           uploaded_by:
             adminCheck.user.id,
         });
@@ -735,24 +751,17 @@ export default function AdminPage() {
       return;
     }
 
-    if (!file) {
-      setError("Please select a PDF.");
+    const fileValidationError = validateUploadFile(file);
+    if (fileValidationError) {
+      setError(fileValidationError);
       return;
     }
-
-    if (file.type !== "application/pdf") {
-      setError(
-        "Only PDF files are allowed."
-      );
+    const selectedFile = file;
+    if (!selectedFile) {
+      setError("Please select a file.");
       return;
     }
-
-    if (file.size > 50 * 1024 * 1024) {
-      setError(
-        "File size must be 50 MB or less."
-      );
-      return;
-    }
+    const contentType = getAllowedFileType(selectedFile)!;
 
     if (!title.trim()) {
       setError("Please enter a title.");
@@ -761,7 +770,7 @@ export default function AdminPage() {
 
     if (
       labMaterialType !==
-        "experiment_list" &&
+      "experiment_list" &&
       (!experimentNumber ||
         Number(experimentNumber) < 1 ||
         Number(experimentNumber) > 16)
@@ -791,7 +800,7 @@ export default function AdminPage() {
         );
       }
 
-      const safeFileName = file.name
+      const safeFileName = selectedFile.name
         .replace(
           /[^a-zA-Z0-9._-]/g,
           "_"
@@ -800,7 +809,7 @@ export default function AdminPage() {
 
       const experimentFolder =
         labMaterialType ===
-        "experiment_list"
+          "experiment_list"
           ? "experiment-list"
           : `experiment-${experimentNumber}`;
 
@@ -813,10 +822,9 @@ export default function AdminPage() {
         .from("materials")
         .upload(
           filePath,
-          file,
+          selectedFile,
           {
-            contentType:
-              "application/pdf",
+            contentType,
             upsert: false,
           }
         );
@@ -836,18 +844,18 @@ export default function AdminPage() {
             labSubjectId,
           experiment_no:
             labMaterialType ===
-            "experiment_list"
+              "experiment_list"
               ? null
               : Number(
-                  experimentNumber
-                ),
+                experimentNumber
+              ),
           material_type:
             labMaterialType,
           title: title.trim(),
-          file_name: file.name,
+          file_name: selectedFile.name,
           file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
+          file_type: contentType,
+          file_size: selectedFile.size,
           uploaded_by:
             adminCheck.user.id,
         });
@@ -932,7 +940,7 @@ export default function AdminPage() {
     material: LabMaterial
   ) {
     const confirmed = window.confirm(
-      `Delete "${material.title}"?\n\nThis will remove the database record and the uploaded PDF.`
+      `Delete "${material.title}"?\n\nThis will remove the database record and the uploaded file.`
     );
 
     if (!confirmed) {
@@ -1004,26 +1012,17 @@ export default function AdminPage() {
   async function replaceLabMaterial(
     material: LabMaterial
   ) {
-    if (!file) {
-      setError(
-        "Select a new PDF first."
-      );
+    const fileValidationError = validateUploadFile(file);
+    if (fileValidationError) {
+      setError(fileValidationError);
       return;
     }
-
-    if (file.type !== "application/pdf") {
-      setError(
-        "Only PDF files are allowed."
-      );
+    const selectedFile = file;
+    if (!selectedFile) {
+      setError("Please select a file.");
       return;
     }
-
-    if (file.size > 50 * 1024 * 1024) {
-      setError(
-        "File size must be 50 MB or less."
-      );
-      return;
-    }
+    const contentType = getAllowedFileType(selectedFile)!;
 
     if (!title.trim()) {
       setError(
@@ -1054,7 +1053,7 @@ export default function AdminPage() {
         );
       }
 
-      const safeFileName = file.name
+      const safeFileName = selectedFile.name
         .replace(
           /[^a-zA-Z0-9._-]/g,
           "_"
@@ -1063,7 +1062,7 @@ export default function AdminPage() {
 
       const experimentFolder =
         material.material_type ===
-        "experiment_list"
+          "experiment_list"
           ? "experiment-list"
           : `experiment-${material.experiment_no}`;
 
@@ -1076,10 +1075,9 @@ export default function AdminPage() {
         .from("materials")
         .upload(
           newFilePath,
-          file,
+          selectedFile,
           {
-            contentType:
-              "application/pdf",
+            contentType,
             upsert: false,
           }
         );
@@ -1096,10 +1094,10 @@ export default function AdminPage() {
         .from("lab_materials")
         .update({
           title: title.trim(),
-          file_name: file.name,
+          file_name: selectedFile.name,
           file_path: newFilePath,
-          file_type: file.type,
-          file_size: file.size,
+          file_type: contentType,
+          file_size: selectedFile.size,
           updated_at:
             new Date().toISOString(),
         })
@@ -1189,7 +1187,7 @@ export default function AdminPage() {
     setReplacingId(material.id);
 
     setMessage(
-      `Replacement mode: choose a new PDF for "${material.title}", then click Replace PDF below.`
+      `Replacement mode: choose a new PDF for "${material.title}", then click Replace below.`
     );
 
     setError("");
@@ -1340,7 +1338,7 @@ export default function AdminPage() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Upload, replace and manage study and laboratory PDFs.
+              Upload, replace and manage study and laboratory files.
             </p>
           </div>
 
@@ -1368,7 +1366,7 @@ export default function AdminPage() {
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              PDF files only · Maximum 50 MB
+              PDF, C, and DWG files · Maximum 50 MB
             </p>
           </div>
 
@@ -1381,11 +1379,10 @@ export default function AdminPage() {
                 setUploadMode("study");
                 resetMessages();
               }}
-              className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
-                uploadMode === "study"
+              className={`rounded-xl px-4 py-3 text-sm font-medium transition ${uploadMode === "study"
                   ? "bg-white text-slate-800 shadow-sm"
                   : "text-slate-500"
-              }`}
+                }`}
             >
               Study Material
             </button>
@@ -1396,11 +1393,10 @@ export default function AdminPage() {
                 setUploadMode("lab");
                 resetMessages();
               }}
-              className={`rounded-xl px-4 py-3 text-sm font-medium transition ${
-                uploadMode === "lab"
+              className={`rounded-xl px-4 py-3 text-sm font-medium transition ${uploadMode === "lab"
                   ? "bg-white text-slate-800 shadow-sm"
                   : "text-slate-500"
-              }`}
+                }`}
             >
               Lab Material
             </button>
@@ -1434,29 +1430,83 @@ export default function AdminPage() {
                   )}
                 </select>
               </label>
-
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">
                   Category
                 </span>
+
                 <select
                   value={materialType}
                   onChange={(event) => {
-                    const nextCategory = event.target.value;
-                    setMaterialType(nextCategory);
-                    setSection(nextCategory === "unit_pdf" ? "unit_pdf" : nextCategory === "question_bank" ? "question_bank" : "class_notes");
+                    setMaterialType(event.target.value);
                     setExamYear("");
+                    setQuestionBankType("pyq");
                   }}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base"
                 >
-                  <option value="unit_pdf">Unit PDF</option>
-                  <option value="class_note">Class Notes</option>
-                  <option value="short_note">Short Notes / Mind Maps</option>
-                  <option value="class_question">Class Questions</option>
-                  <option value="question_bank">Question Bank</option>
+                  {studyMaterialTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
                 </select>
               </label>
 
+              {materialType === "unit_pdf" && (
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Unit
+                  </span>
+
+                  <select
+                    value={unitNumber}
+                    onChange={(event) => setUnitNumber(event.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base"
+                  >
+                    {[1, 2, 3, 4, 5, 6].map((unit) => (
+                      <option key={unit} value={unit}>
+                        Unit {unit}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {materialType === "question_bank" && (
+                <>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">
+                      Question Bank Type
+                    </span>
+
+                    <select
+                      value={questionBankType}
+                      onChange={(event) => setQuestionBankType(event.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base"
+                    >
+                      {questionBankTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">
+                      Exam Year (optional)
+                    </span>
+
+                    <input
+                      value={examYear}
+                      onChange={(event) => setExamYear(event.target.value)}
+                      placeholder="Optional"
+                      inputMode="numeric"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-base outline-none"
+                    />
+                  </label>
+                </>
+              )}
               {materialType !== "question_bank" && (
                 <label className="block">
                   <span className="mb-2 block text-sm font-medium text-slate-700">
@@ -1570,44 +1620,44 @@ export default function AdminPage() {
 
               {labMaterialType !==
                 "experiment_list" && (
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
-                    Experiment
-                  </span>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">
+                      Experiment
+                    </span>
 
-                  <select
-                    value={
-                      experimentNumber
-                    }
-                    onChange={(event) =>
-                      setExperimentNumber(
-                        event.target.value
-                      )
-                    }
-                    disabled={Boolean(
-                      replacingId
-                    )}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base disabled:bg-slate-100"
-                  >
-                    {experiments.map(
-                      (experiment) => (
-                        <option
-                          key={experiment}
-                          value={experiment}
-                        >
-                          Experiment{" "}
-                          {String(
-                            experiment
-                          ).padStart(
-                            2,
-                            "0"
-                          )}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-              )}
+                    <select
+                      value={
+                        experimentNumber
+                      }
+                      onChange={(event) =>
+                        setExperimentNumber(
+                          event.target.value
+                        )
+                      }
+                      disabled={Boolean(
+                        replacingId
+                      )}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base disabled:bg-slate-100"
+                    >
+                      {experiments.map(
+                        (experiment) => (
+                          <option
+                            key={experiment}
+                            value={experiment}
+                          >
+                            Experiment{" "}
+                            {String(
+                              experiment
+                            ).padStart(
+                              2,
+                              "0"
+                            )}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </label>
+                )}
             </div>
           )}
 
@@ -1624,24 +1674,24 @@ export default function AdminPage() {
                     event.target.value
                   )
                 }
-                placeholder="Enter PDF title"
+                placeholder="Enter file title"
                 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-base outline-none focus:border-slate-400"
               />
             </label>
 
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">
-                PDF File
+                File (PDF, C, or DWG)
               </span>
 
               <input
                 id="admin-file"
                 type="file"
-                accept="application/pdf,.pdf"
+                accept=".pdf,.c,.dwg,application/pdf,text/plain,application/octet-stream"
                 onChange={(event) =>
                   setFile(
                     event.target.files?.[0] ||
-                      null
+                    null
                   )
                 }
                 className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
@@ -1676,7 +1726,7 @@ export default function AdminPage() {
                 disabled={uploading}
                 className="flex-1 rounded-xl bg-slate-800 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {uploading ? (replacingId || replacingStudyId ? "Replacing..." : "Uploading...") : (replacingId || replacingStudyId ? "Replace PDF" : "Upload PDF")}
+                {uploading ? (replacingId || replacingStudyId ? "Replacing..." : "Uploading...") : (replacingId || replacingStudyId ? "Replace File" : "Upload File")}
               </button>
 
               {(replacingId || replacingStudyId) && (
@@ -1695,13 +1745,13 @@ export default function AdminPage() {
 
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div><h2 className="text-xl font-semibold text-slate-800">Current Study Materials</h2><p className="mt-1 text-sm text-slate-500">Manage uploaded study PDFs. Replace keeps the material's category and unit.</p></div>
+            <div><h2 className="text-xl font-semibold text-slate-800">Current Study Materials</h2><p className="mt-1 text-sm text-slate-500">Manage uploaded study files. Replace keeps the material's category and unit.</p></div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <select value={managerStudyFilter} onChange={(e) => setManagerStudyFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"><option value="all">All Subjects</option>{studySubjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</select>
               <select value={managerStudyCategory} onChange={(e) => setManagerStudyCategory(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"><option value="all">All Categories</option>{studyMaterialTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}</select>
             </div>
           </div>
-          {studyMaterialsLoading ? <p className="py-8 text-center text-sm text-slate-500">Loading study materials...</p> : filteredStudyMaterials.length === 0 ? <div className="rounded-2xl bg-slate-50 px-5 py-8 text-center"><p className="text-sm font-medium text-slate-700">No study materials found.</p><p className="mt-1 text-xs text-slate-500">Upload a study PDF above; it will appear here.</p></div> : <div className="space-y-3">{filteredStudyMaterials.map((item) => <div key={item.id} className="rounded-2xl border border-slate-200 p-4"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-wide text-slate-400">{item.subject?.name || subjects.find((s) => s.id === item.subject_id)?.name || "Subject"}</p><h3 className="mt-1 break-words font-semibold text-slate-800">{item.title}</h3><div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-full bg-slate-100 px-3 py-1">{formatStudyCategory(item.material_type)}</span>{item.unit_number && <span className="rounded-full bg-slate-100 px-3 py-1">Unit {item.unit_number}</span>}{item.exam_year && <span className="rounded-full bg-slate-100 px-3 py-1">Year {item.exam_year}</span>}<span className="rounded-full bg-slate-100 px-3 py-1">{formatDate(item.updated_at || item.created_at)}</span><span className="max-w-full truncate rounded-full bg-slate-100 px-3 py-1">{item.file_name || "PDF"}</span></div></div><div className="flex shrink-0 gap-2"><button type="button" onClick={() => startStudyReplace(item)} disabled={uploading || deletingStudyId === item.id} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Replace</button><button type="button" onClick={() => deleteStudyMaterial(item)} disabled={uploading || deletingStudyId === item.id || replacingStudyId === item.id} className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">{deletingStudyId === item.id ? "Deleting..." : "Delete"}</button></div></div></div>)}</div>}
+          {studyMaterialsLoading ? <p className="py-8 text-center text-sm text-slate-500">Loading study materials...</p> : filteredStudyMaterials.length === 0 ? <div className="rounded-2xl bg-slate-50 px-5 py-8 text-center"><p className="text-sm font-medium text-slate-700">No study materials found.</p><p className="mt-1 text-xs text-slate-500">Upload a study file above; it will appear here.</p></div> : <div className="space-y-3">{filteredStudyMaterials.map((item) => <div key={item.id} className="rounded-2xl border border-slate-200 p-4"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-wide text-slate-400">{item.subject?.name || subjects.find((s) => s.id === item.subject_id)?.name || "Subject"}</p><h3 className="mt-1 break-words font-semibold text-slate-800">{item.title}</h3><div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-full bg-slate-100 px-3 py-1">{formatStudyCategory(item.material_type)}</span>{item.unit_number && <span className="rounded-full bg-slate-100 px-3 py-1">Unit {item.unit_number}</span>}{item.exam_year && <span className="rounded-full bg-slate-100 px-3 py-1">Year {item.exam_year}</span>}<span className="rounded-full bg-slate-100 px-3 py-1">{formatDate(item.updated_at || item.created_at)}</span><span className="max-w-full truncate rounded-full bg-slate-100 px-3 py-1">{item.file_name || "PDF"}</span></div></div><div className="flex shrink-0 gap-2"><button type="button" onClick={() => startStudyReplace(item)} disabled={uploading || deletingStudyId === item.id} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Replace</button><button type="button" onClick={() => deleteStudyMaterial(item)} disabled={uploading || deletingStudyId === item.id || replacingStudyId === item.id} className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">{deletingStudyId === item.id ? "Deleting..." : "Delete"}</button></div></div></div>)}</div>}
         </section>
 
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
@@ -1712,7 +1762,7 @@ export default function AdminPage() {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Replace or remove uploaded laboratory PDFs.
+                Replace or remove uploaded laboratory files.
               </p>
             </div>
 
@@ -1816,9 +1866,9 @@ export default function AdminPage() {
                           }
                           disabled={
                             replacingId ===
-                              material.id ||
+                            material.id ||
                             deletingId ===
-                              material.id ||
+                            material.id ||
                             uploading
                           }
                           className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
@@ -1835,15 +1885,15 @@ export default function AdminPage() {
                           }
                           disabled={
                             deletingId ===
-                              material.id ||
+                            material.id ||
                             replacingId ===
-                              material.id ||
+                            material.id ||
                             uploading
                           }
                           className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                         >
                           {deletingId ===
-                          material.id
+                            material.id
                             ? "Deleting..."
                             : "Delete"}
                         </button>
