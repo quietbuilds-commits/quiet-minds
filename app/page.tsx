@@ -9,8 +9,10 @@ import Link from "next/link";
 
 // ✏️ CHANGE THIS QUOTE EVERY WEEK
 const WEEKLY_QUOTE = {
-  text: "QUIET MINDS IS SOON GOING TO HIRE TECHNICAL SKILLED STUDENTS BE READY ",
-  author: ".",
+  text: `QUIET MINDS IS GROWING!
+
+We're looking forward to connecting with technically skilled and creative students who are interested in building, experimenting and learning together.`,
+  author: "QUIET MINDS",
 };
 
 const recentUploads = [
